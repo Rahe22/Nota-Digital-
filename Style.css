@@ -1,0 +1,1365 @@
+/* =============================================
+   RESET Y BASE
+============================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  background-color: #F4F6FA;
+  color: #1a1a2e;
+}
+
+/* =============================================
+   NAVBAR
+============================================= */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #2B3A8F;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 54px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+.navbar-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-container {
+  position: relative;
+}
+
+.navbar-badge {
+  background-color: #e74c3c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.btn-menu {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 6px 4px;
+  line-height: 1;
+}
+
+/* =============================================
+   MAIN SCROLL
+============================================= */
+.main-scroll {
+  margin-top: 54px;
+  padding: 10px 10px 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* =============================================
+   CARD
+============================================= */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+}
+
+/* =============================================
+   ENCABEZADO DE NOTA (Logo + Número)
+============================================= */
+.encabezado-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+}
+
+.logo-zona {
+  flex: 1;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.logo-placeholder {
+  flex: 1;
+  height: 60px;
+  border: 1.5px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.logo-icon { font-size: 1.2rem; }
+.logo-placeholder-text { font-size: 11px; color: #aaa; font-weight: 500; }
+.logo-hint { font-size: 9px; color: #bbb; }
+
+.logo-img {
+  width: 100%;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.nota-num-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.nota-num-badge {
+  background-color: #2B3A8F;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  border-radius: 8px;
+}
+
+.cobrada-badge {
+  background-color: #27ae60;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* =============================================
+   BANNER COBRADA
+============================================= */
+.cobrada-banner {
+  background-color: #F0FBF4;
+  border: 1.5px solid #27ae60;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cobrada-banner-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cobrada-banner-icon { font-size: 1.2rem; }
+
+.cobrada-banner-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #27ae60;
+}
+
+.cobrada-banner-sub {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.cobrada-banner-btns {
+  display: flex;
+  gap: 8px;
+}
+
+/* =============================================
+   SECCIÓN GENÉRICA
+============================================= */
+.seccion-header {
+  background-color: #2B3A8F;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+}
+
+.seccion-icon { color: #fff; font-size: 0.85rem; }
+
+.seccion-title {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  flex: 1;
+}
+
+.seccion-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* =============================================
+   CAMPOS
+============================================= */
+.campo-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.campo-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.campo-input {
+  border: 1px solid #dde0e8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1a1a2e;
+  background-color: #F4F6FA;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.campo-input:focus {
+  border-color: #2B3A8F;
+  background-color: #fff;
+}
+
+.campo-input-req {
+  border-color: rgba(231,76,60,0.5) !important;
+  background-color: #FFF8F8 !important;
+}
+
+.campo-input-flat {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: inherit;
+  color: #333;
+  flex: 1;
+}
+
+.campos-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.flex1 { flex: 1; }
+
+/* =============================================
+   FECHA BOTÓN
+============================================= */
+.fecha-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  background-color: #F4F6FA;
+}
+
+.fecha-chevron { margin-left: auto; color: #aaa; }
+
+/* =============================================
+   AUTOCOMPLETE
+============================================= */
+.autocomplete-container {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #dde0e8;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  margin-top: 2px;
+}
+
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.autocomplete-item:hover { background-color: #f7f8fc; }
+.autocomplete-item:last-child { border-bottom: none; }
+
+.autocomplete-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.autocomplete-sub {
+  font-size: 11px;
+  color: #888;
+}
+
+.autocomplete-cerrar {
+  padding: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: #aaa;
+  background: #f9f9f9;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+}
+
+/* =============================================
+   TABLA DE PRODUCTOS
+============================================= */
+.tabla-headers {
+  display: flex;
+  align-items: center;
+  padding: 7px 8px;
+  background-color: #F0F3FA;
+  border-bottom: 1px solid #dde0e8;
+}
+
+.tabla-header-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+.catalogo-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.18);
+  border: none;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* ─ Fila de producto ─ */
+.fila-producto {
+  padding: 6px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fila-producto:nth-child(even) { background-color: #fafbfd; }
+
+.fila-top-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.celda-cantidad {
+  width: 52px;
+  text-align: center;
+  border: 1px solid #dde0e8;
+  border-radius: 6px;
+  padding: 6px 4px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+}
+
+.celda-precio {
+  width: 84px;
+  text-align: right;
+  border: 1px solid #dde0e8;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+}
+
+.celda-subtotal {
+  flex: 1;
+  text-align: right;
+  padding-right: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.btn-star {
+  width: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  text-align: center;
+}
+
+.btn-delete-fila {
+  width: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #aaa;
+  padding: 0;
+  text-align: center;
+}
+
+.btn-delete-fila:hover { color: #e74c3c; }
+
+.celda-descripcion {
+  border: 1px solid #dde0e8;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  outline: none;
+  width: 100%;
+}
+
+.celda-descripcion:focus { border-color: #2B3A8F; }
+
+/* Sugerencias de catálogo en fila */
+.sugerencias-container {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #F1C40F;
+  overflow: hidden;
+}
+
+.sugerencia-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  font-size: 13px;
+  background: none;
+  border-left: none;
+  border-right: none;
+  width: 100%;
+  text-align: left;
+}
+
+.sugerencia-item:last-child { border-bottom: none; }
+.sugerencia-item:hover { background-color: #fffbea; }
+.sugerencia-nombre { flex: 1; font-weight: 500; color: #1a1a2e; }
+.sugerencia-precio { font-size: 12px; font-weight: 600; color: #27ae60; }
+
+.agregar-fila-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: none;
+  color: #2B3A8F;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.agregar-fila-btn:hover { background-color: #f0f3ff; }
+
+/* =============================================
+   TOTALES
+============================================= */
+.totales-card { overflow: hidden; }
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.total-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.3px;
+}
+
+.total-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.iva-row { border-bottom: 1px solid #eee; }
+
+.iva-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #ccc;
+  border-radius: 22px;
+  transition: 0.3s;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.switch input:checked + .slider { background-color: #2B3A8F; }
+.switch input:checked + .slider::before { transform: translateX(16px); }
+
+/* Datos fiscales */
+.fiscal-container {
+  padding: 12px 14px;
+  background-color: #FFF8F0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fiscal-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #2B3A8F;
+  letter-spacing: 1px;
+}
+
+.fiscal-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #e74c3c;
+}
+
+.facturada-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.facturada-check { font-size: 16px; }
+.facturada-label { flex: 1; font-size: 13px; color: #555; }
+
+/* Total final */
+.total-final-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 16px;
+  border-bottom: 1px solid #eee;
+  background-color: #FFF5F5;
+}
+
+.total-final-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e74c3c;
+  letter-spacing: 1px;
+}
+
+.total-final-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+/* Método de pago */
+.metodo-pago-container {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metodo-botones {
+  display: flex;
+  gap: 8px;
+}
+
+.metodo-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1.5px solid #dde0e8;
+  background: #F4F6FA;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.metodo-btn.active {
+  background-color: #2B3A8F;
+  border-color: #2B3A8F;
+  color: #fff;
+}
+
+/* Anticipo */
+.anticipo-container {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.anticipo-input {
+  border: 1px solid #dde0e8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #1a1a2e;
+  background-color: #F4F6FA;
+  outline: none;
+  width: 100%;
+}
+
+.saldo-row { border-bottom: none; }
+
+/* =============================================
+   OBSERVACIONES
+============================================= */
+.observaciones-input {
+  border: 1px solid #dde0e8;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #333;
+  background: #F4F6FA;
+  resize: vertical;
+  width: 100%;
+  min-height: 70px;
+  outline: none;
+}
+
+/* =============================================
+   BOTONES DE ACCIÓN
+============================================= */
+.acciones-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+.btn-por-cobrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 2px solid #2B3A8F;
+  background: #fff;
+  color: #2B3A8F;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.btn-por-cobrar:hover { background-color: #f0f3ff; }
+
+.btn-cobrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.2s;
+}
+
+.btn-cobrar:hover { background-color: #c0392b; }
+.btn-cobrar:disabled { background-color: #aaa; cursor: not-allowed; }
+
+.btn-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px;
+  border-radius: 14px;
+  border: none;
+  background: #25D366;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-whatsapp:hover { background-color: #1da851; }
+
+.cobrar-subtext {
+  text-align: center;
+  font-size: 12px;
+  color: #aaa;
+  padding: 0 20px;
+}
+
+/* =============================================
+   BOTONES AUXILIARES
+============================================= */
+.btn-outline-gray {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn-primary-small {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: #2B3A8F;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn-primary-full {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #2B3A8F;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* =============================================
+   OVERLAYS Y SHEETS
+============================================= */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.sheet {
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slideUp 0.22s ease;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(60px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+  align-self: center;
+  margin-bottom: 2px;
+}
+
+.sheet-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.sheet-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #999;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* ─ Menú ─ */
+.menu-lista { display: flex; flex-direction: column; }
+
+.menu-opcion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid #f0f0f0;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  transition: background-color 0.15s;
+}
+
+.menu-opcion:hover { background-color: #f7f8fc; }
+.menu-opcion:last-child { border-bottom: none; }
+
+.menu-opcion-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.menu-opcion-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-opcion-label { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+.menu-opcion-sub { font-size: 11px; color: #888; }
+.menu-chevron { color: #bbb; font-size: 1.1rem; }
+
+.menu-badge-red {
+  background-color: #e74c3c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 12px;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+/* ─ Catálogo ─ */
+.catalogo-nuevo {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-catalogo-add {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #2B3A8F;
+  color: #fff;
+  font-size: 1.4rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.catalogo-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F4F6FA;
+  border-radius: 10px;
+  padding: 8px 10px;
+  border: 1px solid #dde0e8;
+}
+
+.catalogo-lista {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.catalogo-empty {
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+  padding: 24px;
+  line-height: 1.7;
+}
+
+.catalogo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.catalogo-item:last-child { border-bottom: none; }
+
+.catalogo-item-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.catalogo-item-nombre { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+.catalogo-item-meta { font-size: 11px; color: #888; }
+
+.btn-cat-add {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #2B3A8F;
+  color: #fff;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-cat-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #e74c3c;
+  font-size: 1rem;
+  padding: 4px 8px;
+}
+
+/* ─ Selector de fecha ─ */
+.fecha-campos {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.fecha-campo-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.fecha-campo-input {
+  width: 56px;
+  border: 1.5px solid #2B3A8F;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #1a1a2e;
+  outline: none;
+}
+
+.fecha-campo-anio { width: 80px; }
+
+.fecha-mes-preview {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.fecha-botones {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* =============================================
+   VISTAS SECUNDARIAS (Historial, Clientes, etc.)
+============================================= */
+.vista-secundaria {
+  position: fixed;
+  inset: 0;
+  background-color: #F4F6FA;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vista-header {
+  background-color: #2B3A8F;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  height: 54px;
+  flex-shrink: 0;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0;
+}
+
+.vista-titulo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.vista-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* ─ Tarjeta de nota en historial ─ */
+.nota-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nota-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nota-card-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2B3A8F;
+}
+
+.nota-card-fecha {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.nota-card-cliente {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.nota-card-total {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+.nota-card-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge-cobrada { background: #27ae60; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px; }
+.badge-pendiente { background: #e74c3c; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px; }
+.badge-iva { background: #e67e22; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px; }
+
+.nota-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-card-action {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #dde0e8;
+  background: #F4F6FA;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-card-action.danger { border-color: #e74c3c; color: #e74c3c; background: #fff5f5; }
+
+.historial-empty {
+  text-align: center;
+  color: #aaa;
+  padding: 60px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ─ Tarjeta de cliente ─ */
+.cliente-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.cliente-card-nombre {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.cliente-card-stats {
+  font-size: 12px;
+  color: #888;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ─ Finanzas ─ */
+.finanzas-resumen {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.finanza-kpi {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.finanza-kpi-label { font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px; }
+.finanza-kpi-value { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+.finanza-kpi-sub { font-size: 11px; color: #aaa; }
+
+/* =============================================
+   BOTONES DE CATEGORÍA (Gastos)
+============================================= */
+.cat-btn {
+  padding: 6px 11px;
+  border-radius: 20px;
+  border: 1.5px solid #dde0e8;
+  background: #F4F6FA;
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.cat-btn:hover { background: #e8ecf8; border-color: #aab; }
+
+.cat-btn.active {
+  background: #e67e22;
+  border-color: #e67e22;
+  color: #fff;
+}
+
+/* =============================================
+   TOAST
+============================================= */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #1a1a2e;
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  max-width: 90vw;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* =============================================
+   RESPONSIVE: pantallas grandes
+============================================= */
+@media (min-width: 700px) {
+  .main-scroll {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .sheet {
+    max-width: 480px;
+    border-radius: 24px;
+    margin-bottom: 40px;
+  }
+
+  .overlay {
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Para que el selector de categorías se vea de lujo */
+.categorias-grid {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto; /* Permite deslizar si hay muchas categorías */
+  padding: 5px 0;
+}
+
+.categorias-grid .metodo-btn {
+  border-radius: 20px; /* Bordes redondos */
+  white-space: nowrap;
+  padding: 10px 18px;
+  transition: all 0.3s;
+}
+
+.categorias-grid .metodo-btn.active {
+  background-color: #2B3A8F !important;
+  color: white !important;
+  border-color: #2B3A8F !important;
+}
