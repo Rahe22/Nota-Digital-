@@ -1347,12 +1347,12 @@ html, body {
 .categorias-grid {
   display: flex;
   gap: 8px;
-  overflow-x: auto; /* Permite deslizar si hay muchas categorías */
+  overflow-x: auto;
   padding: 5px 0;
 }
 
 .categorias-grid .metodo-btn {
-  border-radius: 20px; /* Bordes redondos */
+  border-radius: 20px;
   white-space: nowrap;
   padding: 10px 18px;
   transition: all 0.3s;
@@ -1363,3 +1363,83 @@ html, body {
   color: white !important;
   border-color: #2B3A8F !important;
 }
+
+/* =============================================
+   INVENTARIO SIMPLE (ETAPA 1)
+============================================= */
+.inv-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-left: 4px solid #27ae60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inv-card.stock-bajo {
+  border-left-color: #e67e22;
+  background-color: #FFFDF9;
+}
+
+.inv-card.stock-agotado {
+  border-left-color: #e74c3c;
+  background-color: #FFF8F8;
+}
+
+.inv-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.inv-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.inv-meta {
+  font-size: 11px;
+  color: #777;
+  margin-top: 2px;
+}
+
+.inv-stock-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.inv-stock-pill.ok { background: #E8F8EF; color: #27ae60; }
+.inv-stock-pill.bajo { background: #FFF3E0; color: #e67e22; }
+.inv-stock-pill.agotado { background: #FFEBEE; color: #e74c3c; }
+
+.inv-controles {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inv-btn {
+  flex: 1;
+  min-width: 72px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid #dde0e8;
+  background: #F4F6FA;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a2e;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.inv-btn.entrada { border-color: #27ae60; color: #27ae60; background: #F0FBF4; }
+.inv-btn.salida { border-color: #e67e22; color: #e67e22; background: #FFF8F0; }
+.inv-btn.usar { border-color: #2B3A8F; color: #2B3A8F; background: #EEF0FF; }
