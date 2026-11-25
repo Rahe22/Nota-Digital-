@@ -1092,4 +1092,697 @@ function descontarInventarioPorNota(nota) {
 // AUTOCOMPLETAR NOMBRE DEL CLIENTE
 // ─────────────────────────────────────────────
 function obtenerClientesPrevios() {
-  const map = new
+  const map = new Map();
+  notas.forEach(function(n) {
+    const nombre = (n.cliente && n.cliente.nombre) ? n.cliente.nombre.trim() : '';
+    const key = normalizarTexto(nombre);
+    if (key && !map.has(key)) {
+      map.set(key, {
+        nombre: nombre,
+        telefono: (n.cliente && n.cliente.telefono) || '',
+        email: (n.cliente && n.cliente.email) || '',
+        direccion: (n.cliente && n.cliente.direccion) || ''
+      });
+    }
+  });
+  return Array.from(map.values());
+}
+
+function manejarAutocompletarNombre(texto) {
+  notaActual.cliente.nombre = texto;
+  guardarNotaActual();
+
+  const container = document.getElementById('autocompleteContainer');
+  if (!texto || texto.trim().length < 2) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  const q = normalizarTexto(texto);
+  const sugs = obtenerClientesPrevios()
+    .filter(function(c) {
+      return normalizarTexto(c.nombre).includes(q);
+    })
+    .slice(0, 4);
+
+  if (!sugs.length) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = '';
+  sugs.forEach(function(c) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'autocomplete-item';
+    item.innerHTML =
+      '<span class="autocomplete-nombre">' + escapeHtml(c.nombre) + '</span>' +
+      (c.telefono ? '<span class="autocomplete-meta">📞 ' + escapeHtml(c.telefono) + '</span>' : '');
+
+    item.addEventListener('click', function() {
+      seleccionarCliente(c);
+    });
+    container.appendChild(item);
+  });
+
+  const cerrar = document.createElement('button');
+  cerrar.type = 'button';
+  cerrar.className = 'autocomplete-cerrar';
+  cerrar.textContent = 'Cerrar sugerencias';
+  cerrar.addEventListener('click', function() {
+    container.style.display = 'none';
+    container.innerHTML = '';
+  });
+  container.appendChild(cerrar);
+
+  container.style.display = 'block';
+}
+
+function seleccionarCliente(c) {
+  notaActual.cliente.nombre = c.nombre;
+  notaActual.cliente.telefono = c.telefono;
+  notaActual.cliente.email = c.email;
+  notaActual.cliente.direccion = c.direccion;
+  guardarNotaActual();
+
+  document.getElementById('clienteNombre').value = c.nombre;
+  document.getElementById('clienteTelefono').value = c.telefono;
+  document.getElementById('clienteEmail').value = c.email;
+  document.getElementById('clienteDireccion').value = c.direccion;
+
+  const container = document.getElementById('autocompleteContainer');
+  container.style.display = 'none';
+  container.innerHTML = '';
+}
+
+// ─────────────────────────────────────────────
+// MENÚ Y VISTAS SECUNDARIAS
+// ─────────────────────────────────────────────
+let filtroHistorialActual = 'todas';
+
+function abrirMenu() {
+  actualizarBadgePendientes();
+  document.getElementById('overlayMenu').style.display = 'flex';
+}
+
+function cerrarMenu() {
+  document.getElementById('overlayMenu').style.display = 'none';
+}
+
+function mostrarVista(tipo) {
+  cerrarMenu();
+  const buscador = document.getElementById('busquedaHistorialInput');
+
+  if (tipo === 'historial') {
+    filtroHistorialActual = 'todas';
+    if (buscador) buscador.value = '';
+    renderizarHistorial('todas');
+    document.getElementById('historialTitulo').textContent = 'Historial de Ventas';
+    document.getElementById('vistaHistorial').style.display = 'flex';
+  } else if (tipo === 'pendientes') {
+    filtroHistorialActual = 'pendientes';
+    if (buscador) buscador.value = '';
+    renderizarHistorial('pendientes');
+    document.getElementById('historialTitulo').textContent = 'Notas por Cobrar';
+    document.getElementById('vistaHistorial').style.display = 'flex';
+  } else if (tipo === 'inventario') {
+    renderizarInventario();
+    document.getElementById('vistaInventario').style.display = 'flex';
+  } else if (tipo === 'gastos') {
+    actualizarPantallaGastos();
+    document.getElementById('vistaGastos').style.display = 'flex';
+  } else if (tipo === 'iva') {
+    filtroHistorialActual = 'iva';
+    if (buscador) buscador.value = '';
+    renderizarHistorial('iva');
+    document.getElementById('historialTitulo').textContent = 'Notas con I.V.A.';
+    document.getElementById('vistaHistorial').style.display = 'flex';
+  } else if (tipo === 'clientes') {
+    renderizarClientes();
+    document.getElementById('vistaClientes').style.display = 'flex';
+  } else if (tipo === 'finanzas') {
+    renderizarFinanzas();
+    document.getElementById('vistaFinanzas').style.display = 'flex';
+  } else if (tipo === 'config') {
+    document.getElementById('configNombre').value = config.nombre || '';
+    document.getElementById('configMensaje').value = config.mensaje || 'Gracias por su compra.';
+    document.getElementById('configFolio').value = config.folioInicial || 1;
+    document.getElementById('configLogoUrl').value = config.logoUrl || '';
+    document.getElementById('vistaConfig').style.display = 'flex';
+  }
+}
+
+function cerrarVista(tipo) {
+  if (tipo === 'historial') document.getElementById('vistaHistorial').style.display = 'none';
+  else if (tipo === 'inventario') document.getElementById('vistaInventario').style.display = 'none';
+  else if (tipo === 'clientes') document.getElementById('vistaClientes').style.display = 'none';
+  else if (tipo === 'finanzas') document.getElementById('vistaFinanzas').style.display = 'none';
+  else if (tipo === 'config') document.getElementById('vistaConfig').style.display = 'none';
+  else if (tipo === 'gastos') document.getElementById('vistaGastos').style.display = 'none';
+}
+
+// ─── HISTORIAL ───────────────────────────────
+function renderizarHistorial(filtro) {
+  if (filtro) filtroHistorialActual = filtro;
+  const lista = document.getElementById('historialLista');
+  const buscador = document.getElementById('busquedaHistorialInput');
+  const q = buscador ? normalizarTexto(buscador.value) : '';
+
+  lista.innerHTML = '';
+
+  let notasFiltradas = notas.slice().sort(function(a, b) {
+    return (parseInt(b.numero, 10) || 0) - (parseInt(a.numero, 10) || 0);
+  });
+
+  if (filtroHistorialActual === 'pendientes') {
+    notasFiltradas = notasFiltradas.filter(function(n) {
+      return !n.cobrada;
+    });
+  } else if (filtroHistorialActual === 'iva') {
+    notasFiltradas = notasFiltradas.filter(function(n) {
+      return !!n.ivaActivo;
+    });
+  }
+
+  if (q) {
+    notasFiltradas = notasFiltradas.filter(function(n) {
+      const folioStr = String(n.numero || '').padStart(4, '0');
+      const nombreStr = normalizarTexto(n.cliente && n.cliente.nombre);
+      return nombreStr.includes(q) || folioStr.includes(q) || String(n.numero || '').includes(q);
+    });
+  }
+
+  if (!notasFiltradas.length) {
+    lista.innerHTML = '<div class="catalogo-empty">📭<br>No hay notas en esta sección todavía.</div>';
+    return;
+  }
+
+  notasFiltradas.forEach(function(nota) {
+    const tot = calcTotalNota(nota);
+    const anticipo = parseFloat(nota.anticipo) || 0;
+    const saldo = Math.max(0, tot - anticipo);
+    const card = document.createElement('div');
+    card.className = 'item-card';
+
+    const badgesHtml =
+      '<span class="badge-estado ' + (nota.cobrada ? 'cobrada' : 'pendiente') + '">' +
+      (nota.cobrada ? '✓ COBRADA' : '🕒 POR COBRAR') + '</span>' +
+      (nota.ivaActivo ? '<span class="badge-estado iva">I.V.A. 16%</span>' : '');
+
+    const saldoSub = (!nota.cobrada && anticipo > 0)
+      ? '<div class="item-card-sub" style="color:#e74c3c">Anticipo: ' + formatCurrency(anticipo) + ' · Saldo: ' + formatCurrency(saldo) + '</div>'
+      : '';
+
+    card.innerHTML =
+      '<div class="item-card-top">' +
+      '<div>' +
+      '<div class="item-card-title">No. ' + String(nota.numero).padStart(4, '0') + ' · ' + escapeHtml((nota.cliente && nota.cliente.nombre) || 'Cliente sin nombre') + '</div>' +
+      '<div class="item-card-sub">' + escapeHtml(formatDate(nota.cliente && nota.cliente.fecha)) + '</div>' +
+      saldoSub +
+      '<div>' + badgesHtml + '</div>' +
+      '</div>' +
+      '<div class="item-card-monto">' + formatCurrency(tot) + '</div>' +
+      '</div>' +
+      '<div class="item-card-actions">' +
+      '<button type="button" class="btn-card-action btn-abrir-nota">Abrir</button>' +
+      '<button type="button" class="btn-card-action wa btn-wa-nota">WhatsApp</button>' +
+      '<button type="button" class="btn-card-action danger btn-del-nota">Borrar</button>' +
+      '</div>';
+
+    card.querySelector('.btn-abrir-nota').addEventListener('click', function() {
+      const copia = JSON.parse(JSON.stringify(nota));
+      cargarNotaEnEditor(copia);
+      guardarNotaActual();
+      cerrarVista('historial');
+      mostrarToast('Nota #' + String(nota.numero).padStart(4, '0') + ' cargada');
+    });
+
+    card.querySelector('.btn-wa-nota').addEventListener('click', function() {
+      accionWhatsapp(nota);
+    });
+
+    card.querySelector('.btn-del-nota').addEventListener('click', function() {
+      if (!confirm('¿Eliminar la nota #' + String(nota.numero).padStart(4, '0') + '?')) return;
+      notas = notas.filter(function(item) {
+        return item.id !== nota.id;
+      });
+      guardarNotas();
+      actualizarBadgePendientes();
+      renderizarHistorial(filtroHistorialActual);
+      mostrarToast('Nota eliminada');
+    });
+
+    lista.appendChild(card);
+  });
+}
+
+// ─── CLIENTES ────────────────────────────────
+function renderizarClientes() {
+  const lista = document.getElementById('clientesLista');
+  lista.innerHTML = '';
+
+  const map = new Map();
+  notas.forEach(function(n) {
+    const nombre = (n.cliente && n.cliente.nombre) ? n.cliente.nombre.trim() : '';
+    const key = normalizarTexto(nombre);
+    if (!key) return;
+    if (!map.has(key)) {
+      map.set(key, {
+        nombre: nombre,
+        telefono: (n.cliente && n.cliente.telefono) || '',
+        notas: [],
+        totalVentas: 0
+      });
+    }
+    const entry = map.get(key);
+    entry.notas.push(n);
+    entry.totalVentas += calcTotalNota(n);
+  });
+
+  if (!map.size) {
+    lista.innerHTML = '<div class="catalogo-empty">👥<br>Aún no hay clientes registrados.<br>Guarda algunas notas primero.</div>';
+    return;
+  }
+
+  const clientes = Array.from(map.values()).sort(function(a, b) {
+    return b.totalVentas - a.totalVentas;
+  });
+
+  clientes.forEach(function(c) {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML =
+      '<div class="item-card-top">' +
+      '<div>' +
+      '<div class="item-card-title">' + escapeHtml(c.nombre) + '</div>' +
+      '<div class="item-card-sub">' + c.notas.length + ' nota' + (c.notas.length !== 1 ? 's' : '') + (c.telefono ? ' · 📞 ' + escapeHtml(c.telefono) : '') + '</div>' +
+      '</div>' +
+      '<div class="item-card-monto">' + formatCurrency(c.totalVentas) + '</div>' +
+      '</div>';
+    lista.appendChild(card);
+  });
+}
+
+// ─── FINANZAS ─────────────────────────────────
+function calcTotalNota(n) {
+  const prods = Array.isArray(n.productos) ? n.productos : [];
+  const sub = prods.reduce(function(s, p) {
+    return s + (parseFloat(p.cantidad) || 0) * (parseFloat(p.precioUnitario) || 0);
+  }, 0);
+  return n.ivaActivo ? sub * 1.16 : sub;
+}
+
+function renderizarFinanzas() {
+  const body = document.getElementById('finanzasBody');
+  body.innerHTML = '';
+
+  const cobradas = notas.filter(function(n) { return n.cobrada; });
+  const pendientes = notas.filter(function(n) { return !n.cobrada; });
+
+  const totalCobrado = cobradas.reduce(function(sum, n) { return sum + calcTotalNota(n); }, 0);
+  const totalPendiente = pendientes.reduce(function(sum, n) { return sum + calcTotalNota(n); }, 0);
+  const totalVentas = totalCobrado + totalPendiente;
+  const totalGastosTotal = gastos.reduce(function(s, g) { return s + (parseFloat(g.monto) || 0); }, 0);
+  const utilidadNeta = totalCobrado - totalGastosTotal;
+
+  const wrapper = document.createElement('div');
+  wrapper.style.display = 'flex';
+  wrapper.style.flexDirection = 'column';
+  wrapper.style.gap = '10px';
+
+  wrapper.innerHTML =
+    '<div class="finanzas-resumen">' +
+    '<div class="finanza-kpi"><span class="finanza-kpi-label">TOTAL VENTAS</span><span class="finanza-kpi-value">' + formatCurrency(totalVentas) + '</span><span class="finanza-kpi-sub">' + notas.length + ' notas</span></div>' +
+    '<div class="finanza-kpi"><span class="finanza-kpi-label">COBRADO</span><span class="finanza-kpi-value" style="color:#27ae60">' + formatCurrency(totalCobrado) + '</span><span class="finanza-kpi-sub">' + cobradas.length + ' notas</span></div>' +
+    '</div>' +
+    '<div class="finanzas-resumen">' +
+    '<div class="finanza-kpi"><span class="finanza-kpi-label">POR COBRAR</span><span class="finanza-kpi-value" style="color:#e74c3c">' + formatCurrency(totalPendiente) + '</span><span class="finanza-kpi-sub">' + pendientes.length + ' notas</span></div>' +
+    '<div class="finanza-kpi"><span class="finanza-kpi-label">GASTOS TOTAL</span><span class="finanza-kpi-value" style="color:#e67e22">' + formatCurrency(totalGastosTotal) + '</span><span class="finanza-kpi-sub">' + gastos.length + ' registros</span></div>' +
+    '</div>' +
+    '<div class="card" style="padding:14px"><div class="total-row"><span class="total-label">UTILIDAD (COBRADO - GASTOS)</span><span class="total-value" style="color:' + (utilidadNeta >= 0 ? '#27ae60' : '#e74c3c') + '">' + formatCurrency(utilidadNeta) + '</span></div></div>' +
+    '<div id="finanzasGastosCat"></div>';
+
+  body.appendChild(wrapper);
+
+  const catMap = new Map();
+  gastos.forEach(function(g) {
+    const cat = g.categoria || '📋 Otros';
+    catMap.set(cat, (catMap.get(cat) || 0) + (parseFloat(g.monto) || 0));
+  });
+
+  if (catMap.size > 0) {
+    const catContainer = body.querySelector('#finanzasGastosCat');
+    let filasHtml = '';
+    catMap.forEach(function(monto, cat) {
+      filasHtml +=
+        '<div class="total-row" style="padding:10px 14px;border-bottom:1px solid #f0f1f5">' +
+        '<span class="total-label">' + escapeHtml(cat) + '</span>' +
+        '<span class="total-value">' + formatCurrency(monto) + '</span>' +
+        '</div>';
+    });
+    catContainer.innerHTML =
+      '<div class="card">' +
+      '<div class="seccion-header" style="background:#e67e22"><span class="seccion-icon">💸</span><span class="seccion-title">GASTOS POR CATEGORÍA</span></div>' +
+      '<div>' + filasHtml + '</div>' +
+      '</div>';
+  }
+}
+
+// ─────────────────────────────────────────────
+// EVENTOS PRINCIPALES
+// ─────────────────────────────────────────────
+function inicializarEventos() {
+  document.getElementById('btnMenu').addEventListener('click', abrirMenu);
+
+  document.getElementById('overlayMenu').addEventListener('click', function(e) {
+    if (e.target === this) cerrarMenu();
+  });
+  document.getElementById('overlayCatalogo').addEventListener('click', function(e) {
+    if (e.target === this) cerrarCatalogo();
+  });
+
+  document.getElementById('btnCerrarCatalogo').addEventListener('click', cerrarCatalogo);
+
+  document.getElementById('btnCatalogo').addEventListener('click', abrirCatalogo);
+  document.getElementById('btnCatalogoAgregar').addEventListener('click', accionAgregarAlCatalogo);
+  document.getElementById('catalogoBusqueda').addEventListener('input', renderizarCatalogo);
+  document.getElementById('catalogoNombreInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') accionAgregarAlCatalogo();
+  });
+
+  document.getElementById('clienteNombre').addEventListener('input', function(e) {
+    manejarAutocompletarNombre(e.target.value);
+  });
+  document.getElementById('clienteTelefono').addEventListener('input', function(e) {
+    notaActual.cliente.telefono = e.target.value.replace(/\D/g, '').slice(0, 10);
+    e.target.value = notaActual.cliente.telefono;
+    guardarNotaActual();
+  });
+  document.getElementById('clienteVendedor').addEventListener('input', function(e) {
+    notaActual.cliente.vendedor = e.target.value;
+    guardarNotaActual();
+  });
+  document.getElementById('clienteDireccion').addEventListener('input', function(e) {
+    notaActual.cliente.direccion = e.target.value;
+    guardarNotaActual();
+  });
+  document.getElementById('clienteEmail').addEventListener('input', function(e) {
+    notaActual.cliente.email = e.target.value;
+    guardarNotaActual();
+  });
+  document.getElementById('clienteFecha').addEventListener('change', function(e) {
+    notaActual.cliente.fecha = e.target.value || new Date().toISOString().split('T')[0];
+    guardarNotaActual();
+  });
+
+  document.getElementById('ivaToggle').addEventListener('change', function() {
+    if (notaActual.cobrada) {
+      mostrarToast('No se puede cambiar el IVA de una nota cobrada');
+      this.checked = notaActual.ivaActivo;
+      return;
+    }
+    notaActual.ivaActivo = this.checked;
+    if (this.checked) {
+      notaActual.datosFactura = notaActual.datosFactura || { rfc: '', regimenFiscal: '', codigoPostal: '' };
+    } else {
+      notaActual.datosFactura = null;
+    }
+    actualizarSeccionIva();
+    recalcularTotales();
+    guardarNotaActual();
+  });
+
+  document.getElementById('fiscalRFC').addEventListener('input', function(e) {
+    if (!notaActual.datosFactura) notaActual.datosFactura = {};
+    notaActual.datosFactura.rfc = e.target.value.toUpperCase();
+    e.target.value = notaActual.datosFactura.rfc;
+    actualizarFiscalWarning();
+    guardarNotaActual();
+  });
+  document.getElementById('fiscalRegimen').addEventListener('input', function(e) {
+    if (!notaActual.datosFactura) notaActual.datosFactura = {};
+    notaActual.datosFactura.regimenFiscal = e.target.value;
+    actualizarFiscalWarning();
+    guardarNotaActual();
+  });
+  document.getElementById('fiscalCP').addEventListener('input', function(e) {
+    if (!notaActual.datosFactura) notaActual.datosFactura = {};
+    notaActual.datosFactura.codigoPostal = e.target.value.replace(/\D/g, '').slice(0, 5);
+    e.target.value = notaActual.datosFactura.codigoPostal;
+    actualizarFiscalWarning();
+    guardarNotaActual();
+  });
+
+  document.getElementById('facturadaToggle').addEventListener('change', function() {
+    notaActual.facturada = this.checked;
+    actualizarFacuturadaDisplay();
+    const idx = notas.findIndex(function(n) {
+      return n.id === notaActual.id;
+    });
+    if (idx >= 0) {
+      notas[idx].facturada = notaActual.facturada;
+      guardarNotas();
+    }
+    guardarNotaActual();
+  });
+
+  document.getElementById('btnEfectivo').addEventListener('click', function() {
+    notaActual.metodoPago = 'efectivo';
+    document.getElementById('btnEfectivo').classList.add('active');
+    document.getElementById('btnTransferencia').classList.remove('active');
+    guardarNotaActual();
+  });
+  document.getElementById('btnTransferencia').addEventListener('click', function() {
+    notaActual.metodoPago = 'transferencia';
+    document.getElementById('btnTransferencia').classList.add('active');
+    document.getElementById('btnEfectivo').classList.remove('active');
+    guardarNotaActual();
+  });
+
+  document.getElementById('anticipoInput').addEventListener('input', function(e) {
+    const val = limpiarNumero(e.target.value);
+    e.target.value = val;
+    notaActual.anticipo = val;
+    recalcularTotales();
+    guardarNotaActual();
+  });
+
+  document.getElementById('observaciones').addEventListener('input', function(e) {
+    notaActual.observaciones = e.target.value;
+    guardarNotaActual();
+  });
+
+  document.getElementById('btnAgregarFila').addEventListener('click', agregarFila);
+  document.getElementById('btnGuardarPendiente').addEventListener('click', accionGuardarPendiente);
+  document.getElementById('btnCobrar').addEventListener('click', accionCobrar);
+  document.getElementById('btnWhatsapp').addEventListener('click', function() {
+    accionWhatsapp(notaActual);
+  });
+
+  document.getElementById('btnNuevaNota2').addEventListener('click', function() {
+    crearNuevaNota();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  const buscadorHistorial = document.getElementById('busquedaHistorialInput');
+  if (buscadorHistorial) {
+    buscadorHistorial.addEventListener('input', function() {
+      renderizarHistorial(filtroHistorialActual);
+    });
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      cerrarMenu();
+      cerrarCatalogo();
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// INICIALIZACIÓN
+// ─────────────────────────────────────────────
+function init() {
+  cargarDatos();
+  inicializarEventos();
+
+  if (notaActual) {
+    cargarNotaEnEditor(notaActual);
+  } else {
+    crearNuevaNota();
+  }
+
+  const gastoFechaEl = document.getElementById('gastoFecha');
+  if (gastoFechaEl && !gastoFechaEl.value) {
+    gastoFechaEl.value = new Date().toISOString().split('T')[0];
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+// ─────────────────────────────────────────────
+// REINICIO TOTAL
+// ─────────────────────────────────────────────
+function confirmarReinicioTotal() {
+  const confirmacion1 = confirm('¿Estás seguro de que quieres borrar TODO? Se perderán notas, clientes, catálogo y gastos guardados.');
+  if (!confirmacion1) return;
+
+  const confirmacion2 = confirm('ESTA ACCIÓN NO SE PUEDE DESHACER. ¿Realmente quieres dejar la app como nueva?');
+  if (!confirmacion2) return;
+
+  localStorage.removeItem('nr_notas');
+  localStorage.removeItem('nr_catalogo');
+  localStorage.removeItem('nr_config');
+  localStorage.removeItem('nr_notaActual');
+  localStorage.removeItem('nr_gastos');
+
+  notas = [];
+  catalogo = [];
+  gastos = [];
+  config = {
+    nombre: '',
+    mensaje: 'Gracias por su compra.',
+    folioInicial: 1,
+    logoUrl: ''
+  };
+
+  cerrarVista('config');
+  crearNuevaNota();
+  actualizarBadgePendientes();
+  mostrarToast('Todos los datos se reiniciaron ✓');
+}
+
+// ─────────────────────────────────────────────
+// MÓDULO DE GASTOS
+// ─────────────────────────────────────────────
+let gastoCategoriaActual = '⛽ Combustible';
+let gastoFiltroMes = new Date().toISOString().substring(0, 7);
+
+function setGastoCat(elemento, cat) {
+  const botones = elemento.parentElement.querySelectorAll('.cat-btn');
+  botones.forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  elemento.classList.add('active');
+  gastoCategoriaActual = cat;
+}
+
+function accionGuardarGasto() {
+  const concepto = document.getElementById('gastoConcepto').value.trim();
+  const monto = parseFloat(document.getElementById('gastoMonto').value);
+  const fecha = document.getElementById('gastoFecha').value;
+
+  if (!concepto || isNaN(monto) || monto <= 0 || !fecha) {
+    mostrarToast('⚠️ Llena concepto, monto y fecha');
+    return;
+  }
+
+  const nuevoGasto = {
+    id: generarId(),
+    categoria: gastoCategoriaActual,
+    concepto: concepto,
+    monto: monto,
+    fecha: fecha
+  };
+
+  gastos.unshift(nuevoGasto);
+  guardarGastos();
+
+  document.getElementById('gastoConcepto').value = '';
+  document.getElementById('gastoMonto').value = '';
+
+  actualizarPantallaGastos();
+  mostrarToast('Gasto registrado ✓');
+}
+
+function eliminarGasto(id) {
+  if (!confirm('¿Eliminar este gasto?')) return;
+  gastos = gastos.filter(function(g) {
+    return g.id !== id;
+  });
+  guardarGastos();
+  actualizarPantallaGastos();
+  mostrarToast('Gasto eliminado');
+}
+
+function cambiarFiltroMesGastos(delta) {
+  const partes = gastoFiltroMes.split('-');
+  let anio = parseInt(partes[0], 10);
+  let mes = parseInt(partes[1], 10) - 1;
+  mes += delta;
+  if (mes < 0) {
+    mes = 11;
+    anio--;
+  }
+  if (mes > 11) {
+    mes = 0;
+    anio++;
+  }
+  gastoFiltroMes = anio + '-' + String(mes + 1).padStart(2, '0');
+  actualizarPantallaGastos();
+}
+
+function actualizarPantallaGastos() {
+  const lista = document.getElementById('listaGastos');
+  const hoy = new Date().toISOString().split('T')[0];
+  const esteMesReal = hoy.substring(0, 7);
+
+  const totalHoy = gastos
+    .filter(function(g) { return g.fecha === hoy; })
+    .reduce(function(s, g) { return s + (parseFloat(g.monto) || 0); }, 0);
+
+  const totalMes = gastos
+    .filter(function(g) { return g.fecha && g.fecha.startsWith(esteMesReal); })
+    .reduce(function(s, g) { return s + (parseFloat(g.monto) || 0); }, 0);
+
+  document.getElementById('gastoHoy').textContent = formatCurrency(totalHoy);
+  document.getElementById('gastoMes').textContent = formatCurrency(totalMes);
+
+  const gastosFiltrados = gastos.filter(function(g) {
+    return g.fecha && g.fecha.startsWith(gastoFiltroMes);
+  });
+
+  const totalFiltrado = gastosFiltrados.reduce(function(s, g) {
+    return s + (parseFloat(g.monto) || 0);
+  }, 0);
+
+  const partes = gastoFiltroMes.split('-');
+  const nombreMes = MESES[parseInt(partes[1], 10) - 1] + ' ' + partes[0];
+
+  lista.innerHTML =
+    '<div class="card" style="margin-bottom:10px">' +
+    '<div class="seccion-header" style="background:#e67e22">' +
+    '<button type="button" onclick="cambiarFiltroMesGastos(-1)" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:0 6px">‹</button>' +
+    '<span class="seccion-title" style="text-align:center">' + nombreMes.toUpperCase() + '</span>' +
+    '<button type="button" onclick="cambiarFiltroMesGastos(1)" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:0 6px">›</button>' +
+    '</div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px">' +
+    '<span style="font-size:12px;font-weight:600;color:#888">' + gastosFiltrados.length + ' gasto' + (gastosFiltrados.length !== 1 ? 's' : '') + '</span>' +
+    '<span style="font-size:16px;font-weight:700;color:#e67e22">' + formatCurrency(totalFiltrado) + '</span>' +
+    '</div>' +
+    '</div>';
+
+  if (gastosFiltrados.length === 0) {
+    lista.innerHTML += '<p style="text-align:center;color:#aaa;padding:30px 20px;font-size:13px">Sin gastos en ' + nombreMes + '.</p>';
+    return;
+  }
+
+  gastosFiltrados.forEach(function(g) {
+    const item = document.createElement('div');
+    item.className = 'item-card';
+    item.innerHTML =
+      '<div class="item-card-top">' +
+      '<div>' +
+      '<div class="item-card-title" style="color:#e67e22">' + escapeHtml(g.categoria || '📋 Otros') + ' · ' + escapeHtml(g.concepto) + '</div>' +
+      '<div class="item-card-sub">' + escapeHtml(formatDate(g.fecha)) + '</div>' +
+      '</div>' +
+      '<div class="item-card-monto" style="color:#e67e22">' + formatCurrency(g.monto) + '</div>' +
+      '</div>' +
+      '<div class="item-card-actions">' +
+      '<button type="button" class="btn-card-action danger" onclick="eliminarGasto(\'' + escapeHtml(g.id) + '\')">Borrar</button>' +
+      '</div>';
+    lista.appendChild(item);
+  });
+}
