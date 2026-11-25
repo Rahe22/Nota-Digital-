@@ -8,12 +8,14 @@
 </head>
 <body>
 
-  <!-- BARRA SUPERIOR -->
+  <!-- BARRA SUPERIOR (Menú a la derecha) -->
   <header class="navbar">
-    <button type="button" class="btn-menu" id="btnMenu" aria-label="Abrir menú">☰</button>
     <div class="navbar-title">Nota de Remisión</div>
-    <div class="navbar-badge-wrap" id="badgeContainer" style="display:none" onclick="mostrarVista('pendientes')">
-      <span class="navbar-badge" id="navbarBadge">0</span>
+    <div class="navbar-right">
+      <div class="navbar-badge-wrap" id="badgeContainer" style="display:none" onclick="mostrarVista('pendientes')">
+        <span class="navbar-badge" id="navbarBadge">0</span>
+      </div>
+      <button type="button" class="btn-menu" id="btnMenu" aria-label="Abrir menú">☰</button>
     </div>
   </header>
 
@@ -134,9 +136,9 @@
         <span class="total-value" id="totalIva" style="color:#aaa">$0.00</span>
       </div>
 
-      <!-- Datos Fiscales (solo si IVA activo) -->
+      <!-- Datos Fiscales (opcionales aunque IVA esté activo) -->
       <div class="fiscal-container" id="fiscalContainer" style="display:none">
-        <div class="fiscal-title" id="fiscalTitle">DATOS FISCALES</div>
+        <div class="fiscal-title" id="fiscalTitle">DATOS FISCALES (OPCIONAL)</div>
         <div class="campo-wrapper">
           <label class="campo-label" for="fiscalRFC">RFC</label>
           <input type="text" id="fiscalRFC" class="campo-input" placeholder="XAXX010101000" maxlength="13" style="text-transform:uppercase">
@@ -149,9 +151,7 @@
           <label class="campo-label" for="fiscalCP">CÓDIGO POSTAL (5 dígitos)</label>
           <input type="text" id="fiscalCP" class="campo-input" placeholder="06600" maxlength="5" inputmode="numeric">
         </div>
-        <div class="fiscal-warning" id="fiscalWarning" style="display:none">
-          ⚠️ Completa los datos fiscales
-        </div>
+        <div class="fiscal-warning" id="fiscalWarning" style="display:none"></div>
         <!-- Toggle Facturada -->
         <div class="facturada-row" id="facturadaRow">
           <span class="facturada-check" id="facturadaCheck">○</span>
