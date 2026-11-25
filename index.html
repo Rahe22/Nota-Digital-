@@ -383,7 +383,7 @@
 
   <!-- VISTA SECUNDARIA: GASTOS -->
   <div id="vistaGastos" class="vista-secundaria" style="display:none">
-    <div class="vista-header">
+    <div class="vista-header" style="background:#e67e22">
       <button type="button" class="btn-back" onclick="cerrarVista('gastos')">‹ Volver</button>
       <span class="vista-titulo">Gastos</span>
     </div>
@@ -430,4 +430,86 @@
 
           <div class="campos-fila">
             <div class="campo-wrapper flex1">
-              <label class="campo-label" for="g
+              <label class="campo-label" for="gastoMonto">MONTO ($)</label>
+              <input type="number" id="gastoMonto" class="campo-input" step="0.01" inputmode="decimal" placeholder="0.00">
+            </div>
+            <div class="campo-wrapper flex1">
+              <label class="campo-label" for="gastoFecha">FECHA</label>
+              <input type="date" id="gastoFecha" class="campo-input">
+            </div>
+          </div>
+
+          <button type="button" class="btn-cobrar" onclick="accionGuardarGasto()" style="background:#e67e22">
+            ✓ Registrar Gasto
+          </button>
+        </div>
+      </div>
+
+      <div id="listaGastos" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- VISTA SECUNDARIA: CLIENTES -->
+  <div id="vistaClientes" class="vista-secundaria" style="display:none">
+    <div class="vista-header">
+      <button type="button" class="btn-back" onclick="cerrarVista('clientes')">‹ Volver</button>
+      <span class="vista-titulo">Clientes</span>
+    </div>
+    <div id="clientesLista" class="vista-body"></div>
+  </div>
+
+  <!-- VISTA SECUNDARIA: FINANZAS -->
+  <div id="vistaFinanzas" class="vista-secundaria" style="display:none">
+    <div class="vista-header">
+      <button type="button" class="btn-back" onclick="cerrarVista('finanzas')">‹ Volver</button>
+      <span class="vista-titulo">Finanzas</span>
+    </div>
+    <div id="finanzasBody" class="vista-body"></div>
+  </div>
+
+  <!-- VISTA SECUNDARIA: CONFIGURACIÓN -->
+  <div id="vistaConfig" class="vista-secundaria" style="display:none">
+    <div class="vista-header">
+      <button type="button" class="btn-back" onclick="cerrarVista('config')">‹ Volver</button>
+      <span class="vista-titulo">Configuración</span>
+    </div>
+    <div class="vista-body">
+      <div class="card">
+        <div class="seccion-header">
+          <span class="seccion-icon">⚙️</span>
+          <span class="seccion-title">DATOS DE LA EMPRESA</span>
+        </div>
+        <div class="seccion-body">
+          <div class="campo-wrapper">
+            <label class="campo-label" for="configNombre">Nombre del negocio</label>
+            <input type="text" id="configNombre" class="campo-input" placeholder="Ej. MEGASERIGRAFICA">
+          </div>
+          <div class="campo-wrapper">
+            <label class="campo-label" for="configMensaje">Mensaje al pie de nota</label>
+            <input type="text" id="configMensaje" class="campo-input" placeholder="Gracias por su compra.">
+          </div>
+          <div class="campo-wrapper">
+            <label class="campo-label" for="configFolio">Folio inicial</label>
+            <input type="number" id="configFolio" class="campo-input" min="1" value="1">
+          </div>
+          <div class="campo-wrapper">
+            <label class="campo-label" for="configLogoUrl">URL del logo (opcional)</label>
+            <input type="url" id="configLogoUrl" class="campo-input" placeholder="https://...">
+          </div>
+          <button type="button" class="btn-cobrar" onclick="guardarConfig()">Guardar Configuración</button>
+          <div style="margin-top: 20px; border-top: 1px dashed #e74c3c; padding-top: 16px;">
+            <button type="button" class="btn-card-action danger" style="width:100%" onclick="confirmarReinicioTotal()">
+              ⚠️ REINICIAR APP (Borrar todo)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
