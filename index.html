@@ -1,605 +1,526 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Nota de Remisión</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Estilos de impresión térmica (58mm / 80mm) */
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        font-size: 11px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .navbar,
+      .acciones-container,
+      .cobrar-subtext,
+      .overlay,
+      .vista-secundaria,
+      .toast,
+      .btn-delete-fila,
+      .btn-star,
+      .agregar-fila-btn,
+      .catalogo-btn,
+      #cobradaBanner {
+        display: none !important;
+      }
+      .main-scroll {
+        margin: 0 !important;
+        padding: 4px !important;
+        max-width: 100% !important;
+      }
+      .card,
+      .totales-card {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        border-bottom: 1px dashed #000 !important;
+      }
+      .seccion-header {
+        background: #fff !important;
+        color: #000 !important;
+        border-bottom: 1px solid #000 !important;
+        padding: 4px 2px !important;
+      }
+      .seccion-title,
+      .seccion-icon {
+        color: #000 !important;
+      }
+      .campo-input,
+      .celda-cantidad,
+      .celda-precio,
+      .celda-descripcion,
+      .anticipo-input,
+      .observaciones-input {
+        border: none !important;
+        background: transparent !important;
+        padding: 2px !important;
+        font-size: 11px !important;
+        color: #000 !important;
+      }
+    }
+  </style>
 </head>
 <body>
-
-  <!-- ENCABEZADO / NAVBAR -->
+  <!-- NAVBAR -->
   <header class="navbar">
-    <span class="navbar-title">Nota de Remisión</span>
-    <div class="navbar-actions">
-      <div class="badge-container" id="badgeContainer" style="display:none">
-        <span class="navbar-badge" id="navbarBadge">0</span>
-      </div>
-      <button class="btn-menu" id="btnMenu" title="Menú">&#9776;</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button id="btnMenu" type="button" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:4px 8px;">☰</button>
+      <span style="font-weight:700;font-size:1rem;letter-spacing:0.5px;">NOTA DE REMISIÓN</span>
+    </div>
+    <div id="badgeContainer" style="display:none;align-items:center;gap:6px;background:rgba(255,255,255,0.16);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;">
+      <span>⏳</span>
+      <span id="navbarBadge">0</span>
     </div>
   </header>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <main class="main-scroll" id="mainScroll">
-
-    <!-- SECCIÓN: ENCABEZADO NOTA (Logo + Número) -->
-    <section class="card encabezado-card">
-      <div class="logo-zona" id="logoZona">
-        <div class="logo-placeholder" id="logoPlaceholder">
-          <span class="logo-icon">🖼️</span>
-          <span class="logo-placeholder-text">Logo de empresa</span>
-          <span class="logo-hint">Configúralo en Configuración</span>
-        </div>
-        <img src="" alt="Logo" class="logo-img" id="logoImg" style="display:none">
-      </div>
-      <div class="nota-num-area">
-        <div class="nota-num-badge" id="notaNumBadge">No. 0001</div>
-        <div class="cobrada-badge" id="cobradaBadge" style="display:none">✓ COBRADA</div>
-      </div>
-    </section>
-
-    <!-- BANNER: NOTA COBRADA (solo lectura) -->
-    <section class="cobrada-banner" id="cobradaBanner" style="display:none">
+  <main class="main-scroll">
+    <!-- Banner Nota Cobrada -->
+    <div id="cobradaBanner" class="cobrada-banner" style="display:none;">
       <div class="cobrada-banner-top">
         <span class="cobrada-banner-icon">✅</span>
         <div>
-          <div class="cobrada-banner-title">Nota cobrada · Solo lectura</div>
-          <div class="cobrada-banner-sub">Abierta desde historial o clientes</div>
+          <div class="cobrada-banner-title">Nota cobrada y registrada</div>
+          <div class="cobrada-banner-sub">Puedes reimprimir, compartir o iniciar una nueva nota.</div>
         </div>
       </div>
       <div class="cobrada-banner-btns">
-        <button class="btn-outline-gray" onclick="mostrarVista('historial')">🕐 Historial</button>
-        <button class="btn-primary-small" id="btnNuevaNota2">+ Nueva Nota</button>
+        <button id="btnNuevaNota2" type="button" class="btn-primary-small">+ Nueva Nota</button>
+      </div>
+    </div>
+
+    <!-- Encabezado Logo + Folio -->
+    <section class="card encabezado-card">
+      <div class="logo-zona">
+        <div id="logoPlaceholder" class="logo-placeholder">
+          <span class="logo-icon">🏷️</span>
+          <span class="logo-placeholder-text">LOGO DEL NEGOCIO</span>
+          <span class="logo-hint">Configúralo en el menú</span>
+        </div>
+        <img id="logoImg" class="logo-img" src="" alt="Logo del negocio" style="display:none;" />
+      </div>
+      <div class="nota-num-area">
+        <div id="notaNumBadge" class="nota-num-badge">No. 0001</div>
+        <div id="cobradaBadge" class="cobrada-badge" style="display:none;">✓ COBRADA</div>
       </div>
     </section>
 
-    <!-- SECCIÓN: DATOS DEL CLIENTE -->
+    <!-- Datos del Cliente -->
     <section class="card">
-      <div class="seccion-header" id="headerCliente">
+      <div class="seccion-header">
         <span class="seccion-icon">👤</span>
         <span class="seccion-title">DATOS DEL CLIENTE</span>
       </div>
       <div class="seccion-body">
-        <div class="campo-wrapper">
-          <label class="campo-label">NOMBRE</label>
-          <input type="text" id="clienteNombre" class="campo-input" placeholder="Nombre del cliente" autocomplete="off">
-          <div class="autocomplete-container" id="autocompleteContainer" style="display:none"></div>
+        <div class="campo-wrapper" style="position:relative;">
+          <label class="campo-label" for="clienteNombre">Cliente / Nombre</label>
+          <input id="clienteNombre" type="text" class="campo-input" placeholder="Nombre del cliente" autocomplete="off" />
+          <div id="autocompleteContainer" class="autocomplete-container" style="display:none;"></div>
         </div>
+
         <div class="campos-fila">
           <div class="campo-wrapper flex1">
-            <label class="campo-label">TELÉFONO</label>
-            <input type="tel" id="clienteTelefono" class="campo-input" placeholder="10 dígitos" maxlength="10">
+            <label class="campo-label" for="clienteTelefono">Teléfono</label>
+            <input id="clienteTelefono" type="tel" class="campo-input" placeholder="10 dígitos" inputmode="numeric" />
           </div>
           <div class="campo-wrapper flex1">
-            <label class="campo-label">VENDEDOR</label>
-            <input type="text" id="clienteVendedor" class="campo-input" placeholder="Nombre">
-          </div>
-        </div>
-        <div class="campo-wrapper">
-          <label class="campo-label">DIRECCIÓN</label>
-          <input type="text" id="clienteDireccion" class="campo-input" placeholder="Calle, colonia, ciudad">
-        </div>
-        <div class="campo-wrapper">
-          <label class="campo-label">EMAIL</label>
-          <input type="email" id="clienteEmail" class="campo-input" placeholder="correo@ejemplo.com">
-        </div>
-        <div class="campo-wrapper">
-          <label class="campo-label">FECHA</label>
-          <button class="campo-input fecha-btn" id="fechaBtn">
-            <span>📅</span>
-            <span id="fechaTexto">--/--/----</span>
-            <span class="fecha-chevron">▾</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECCIÓN: PRODUCTOS -->
-    <section class="card">
-      <div class="seccion-header" id="headerProductos">
-        <span class="seccion-icon">📦</span>
-        <span class="seccion-title">PRODUCTOS</span>
-        <button class="catalogo-btn" id="btnCatalogo">⭐ Catálogo</button>
-      </div>
-
-      <!-- Encabezados de tabla -->
-      <div class="tabla-headers">
-        <span class="tabla-header-text" style="width:56px;text-align:center">CANT.</span>
-        <span class="tabla-header-text" style="width:88px;text-align:right">PRECIO U.</span>
-        <span class="tabla-header-text" style="flex:1;text-align:right">SUBTOTAL</span>
-        <span style="width:50px"></span>
-      </div>
-
-      <!-- Filas de productos -->
-      <div id="productosContainer"></div>
-
-      <button class="agregar-fila-btn" id="btnAgregarFila">
-        + Agregar fila
-      </button>
-    </section>
-
-    <!-- SECCIÓN: TOTALES -->
-    <section class="card totales-card">
-
-      <!-- Subtotal -->
-      <div class="total-row">
-        <span class="total-label">SUBTOTAL</span>
-        <span class="total-value" id="totalSubtotal">$0.00</span>
-      </div>
-
-      <!-- IVA Toggle -->
-      <div class="total-row iva-row">
-        <div class="iva-toggle-row">
-          <label class="switch">
-            <input type="checkbox" id="ivaToggle">
-            <span class="slider"></span>
-          </label>
-          <span class="total-label" id="ivaLabel">I.V.A. (desactivado)</span>
-        </div>
-        <span class="total-value" id="totalIva" style="color:#aaa">$0.00</span>
-      </div>
-
-      <!-- Datos Fiscales (opcionales al activar IVA) -->
-      <div class="fiscal-container" id="fiscalContainer" style="display:none">
-        <div class="fiscal-title" id="fiscalTitle">DATOS FISCALES — opcionales para cobrar</div>
-        <div class="campo-wrapper">
-          <label class="campo-label">RFC</label>
-          <input type="text" id="fiscalRFC" class="campo-input" placeholder="XAXX010101000" maxlength="13" style="text-transform:uppercase">
-        </div>
-        <div class="campo-wrapper">
-          <label class="campo-label">RÉGIMEN FISCAL</label>
-          <input type="text" id="fiscalRegimen" class="campo-input" placeholder="612 - Personas Físicas...">
-        </div>
-        <div class="campo-wrapper">
-          <label class="campo-label">CÓDIGO POSTAL (5 dígitos)</label>
-          <input type="text" id="fiscalCP" class="campo-input" placeholder="06600" maxlength="5" inputmode="numeric">
-        </div>
-        <div class="fiscal-warning" id="fiscalWarning" style="display:none">
-          ⚠️ Completa los datos para poder cobrar con I.V.A.
-        </div>
-        <!-- Toggle Facturada -->
-        <div class="facturada-row" id="facturadaRow">
-          <span class="facturada-check" id="facturadaCheck">○</span>
-          <span class="facturada-label" id="facturadaLabel">¿Ya se facturó esta nota?</span>
-          <label class="switch">
-            <input type="checkbox" id="facturadaToggle">
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Total Final -->
-      <div class="total-final-row">
-        <span class="total-final-label">TOTAL</span>
-        <span class="total-final-value" id="totalFinal">$0.00</span>
-      </div>
-
-      <!-- Método de Pago -->
-      <div class="metodo-pago-container">
-        <span class="total-label">MÉTODO DE PAGO</span>
-        <div class="metodo-botones">
-          <button class="metodo-btn active" id="btnEfectivo" data-metodo="efectivo">
-            💵 Efectivo
-          </button>
-          <button class="metodo-btn" id="btnTransferencia" data-metodo="transferencia">
-            📱 Transferencia
-          </button>
-        </div>
-      </div>
-
-      <!-- Anticipo -->
-      <div class="anticipo-container">
-        <span class="total-label">A CUENTA / ANTICIPO</span>
-        <input type="text" id="anticipoInput" class="anticipo-input" placeholder="$0.00" inputmode="decimal">
-      </div>
-
-      <!-- Saldo pendiente -->
-      <div class="total-row saldo-row" id="saldoRow" style="display:none">
-        <span class="total-label" id="saldoLabel">SALDO PENDIENTE</span>
-        <span class="total-value" id="saldoValue" style="font-weight:700">$0.00</span>
-      </div>
-
-    </section>
-
-    <!-- SECCIÓN: OBSERVACIONES -->
-    <section class="card">
-      <div class="seccion-header" id="headerObs">
-        <span class="seccion-icon">✏️</span>
-        <span class="seccion-title">OBSERVACIONES</span>
-      </div>
-      <div class="seccion-body">
-        <textarea id="observaciones" class="observaciones-input" placeholder="Notas adicionales, condiciones de entrega..." rows="3"></textarea>
-      </div>
-    </section>
-
-    <!-- BOTONES DE ACCIÓN -->
-    <div class="acciones-container">
-      <button class="btn-por-cobrar" id="btnGuardarPendiente">🔖 GUARDAR — POR COBRAR</button>
-      <button class="btn-cobrar" id="btnCobrar">🖨️ COBRAR Y COMPARTIR</button>
-      <button class="btn-whatsapp" id="btnWhatsapp">💬 Enviar resumen por WhatsApp</button>
-      <p class="cobrar-subtext" id="cobrarSubtext">Total a cobrar: $0.00</p>
-    </div>
-
-  </main>
-
-  <!-- ════════════════════════════════════════
-       MODAL: MENÚ LATERAL
-  ════════════════════════════════════════ -->
-  <div class="overlay" id="overlayMenu" style="display:none">
-    <div class="sheet sheet-bottom" id="sheetMenu">
-      <div class="sheet-handle"></div>
-      <h2 class="sheet-title">Menú</h2>
-      <div class="menu-lista" id="menuLista">
-        <button class="menu-opcion" onclick="mostrarVista('historial'); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#EEF0FF">🕐</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Historial de Ventas</span>
-            <span class="menu-opcion-sub">Ver todas las notas generadas</span>
-          </div>
-          <span class="menu-chevron">›</span>
-        </button>
-        <button class="menu-opcion" id="menuPendientes" onclick="mostrarVista('pendientes'); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#FFEEEE">🔔</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Notas por Cobrar</span>
-            <span class="menu-opcion-sub" id="menuPendientesSub">Sin pendientes</span>
-          </div>
-          <span class="menu-badge-red" id="menuBadge" style="display:none">0</span>
-        </button>
-        <button class="menu-opcion" onclick="mostrarVista('iva'); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#FFF3E0">📄</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Notas c/ IVA</span>
-            <span class="menu-opcion-sub">Para facturar · Solo notas con I.V.A.</span>
-          </div>
-          <span class="menu-chevron">›</span>
-        </button>
-        <button class="menu-opcion" onclick="mostrarVista('clientes'); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#F3E5FF">👥</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Clientes</span>
-            <span class="menu-opcion-sub">Directorio y estadísticas por cliente</span>
-          </div>
-          <span class="menu-chevron">›</span>
-        </button>
-        <button class="menu-opcion" onclick="mostrarVista('finanzas'); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#E8F8EF">📊</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Finanzas</span>
-            <span class="menu-opcion-sub">Tablero financiero y gráficas</span>
-          </div>
-          <span class="menu-chevron">›</span>
-        </button>
-        <button class="menu-opcion" onclick="mostrarVista('gastos'); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#FFE0B2">💸</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Gastos</span>
-            <span class="menu-opcion-sub">Registro de egresos diarios</span>
-          </div>
-          <span class="menu-chevron">›</span>
-        </button>
-        <button class="menu-opcion" onclick="mostrarVista('inventario'); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#E3F2FD">📦</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Inventario</span>
-            <span class="menu-opcion-sub" id="menuInventarioSub">Control de stock y alertas</span>
-          </div>
-          <span class="menu-badge-red" id="menuInventarioBadge" style="display:none">0</span>
-        </button>
-        <button class="menu-opcion" onclick="mostrarVista('config'); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#F5F5F5">⚙️</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Configuración</span>
-            <span class="menu-opcion-sub">Perfil, logo, temas y más</span>
-          </div>
-          <span class="menu-chevron">›</span>
-        </button>
-        <button class="menu-opcion" id="btnMenuNuevaNota" onclick="accionNuevaNota(); cerrarMenu()">
-          <span class="menu-opcion-icon" style="background:#EEF0FF">🏠</span>
-          <div class="menu-opcion-info">
-            <span class="menu-opcion-label">Nueva Nota</span>
-            <span class="menu-opcion-sub">Ir a la página de inicio</span>
-          </div>
-          <span class="menu-chevron">›</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       MODAL: CATÁLOGO DE PRODUCTOS
-  ════════════════════════════════════════ -->
-  <div class="overlay" id="overlayCatalogo" style="display:none">
-    <div class="sheet sheet-bottom" id="sheetCatalogo">
-      <div class="sheet-handle"></div>
-      <div class="sheet-header-row">
-        <h2 class="sheet-title">⭐ Catálogo de Productos</h2>
-        <button class="btn-close" id="btnCerrarCatalogo">✕</button>
-      </div>
-      <div class="catalogo-nuevo">
-        <input type="text" id="catalogoNombreInput" class="campo-input" placeholder="Nombre del producto..." style="flex:1">
-        <input type="text" id="catalogoPrecioInput" class="campo-input" placeholder="Precio" style="width:90px" inputmode="decimal">
-        <button class="btn-catalogo-add" id="btnCatalogoAgregar">+</button>
-      </div>
-      <div class="catalogo-busqueda" id="catalogoBusquedaWrap">
-        <span>🔍</span>
-        <input type="text" id="catalogoBusqueda" class="campo-input-flat" placeholder="Buscar en catálogo...">
-      </div>
-      <div class="catalogo-lista" id="catalogoLista">
-        <div class="catalogo-empty" id="catalogoEmpty">
-          Aún no tienes productos guardados.<br>Agrega uno arriba.
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       MODAL: SELECTOR DE FECHA
-  ════════════════════════════════════════ -->
-  <div class="overlay" id="overlayFecha" style="display:none">
-    <div class="sheet sheet-bottom" id="sheetFecha">
-      <div class="sheet-handle"></div>
-      <h2 class="sheet-title" style="text-align:center">Seleccionar Fecha</h2>
-      <div class="fecha-campos">
-        <div class="fecha-campo-group">
-          <label class="campo-label">Día</label>
-          <input type="text" id="fechaDia" class="fecha-campo-input" placeholder="DD" maxlength="2" inputmode="numeric">
-        </div>
-        <div class="fecha-campo-group">
-          <label class="campo-label">Mes</label>
-          <input type="text" id="fechaMes" class="fecha-campo-input" placeholder="MM" maxlength="2" inputmode="numeric">
-        </div>
-        <div class="fecha-campo-group">
-          <label class="campo-label">Año</label>
-          <input type="text" id="fechaAnio" class="fecha-campo-input fecha-campo-anio" placeholder="AAAA" maxlength="4" inputmode="numeric">
-        </div>
-      </div>
-      <p class="fecha-mes-preview" id="fechaMesPreview"></p>
-      <div class="fecha-botones">
-        <button class="btn-outline-gray" id="btnFechaCancelar">Cancelar</button>
-        <button class="btn-primary-full" id="btnFechaConfirmar">Confirmar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       VISTA: HISTORIAL
-  ════════════════════════════════════════ -->
-  <div class="vista-secundaria" id="vistaHistorial" style="display:none">
-    <div class="vista-header">
-      <button class="btn-back" onclick="cerrarVista('historial')">← Volver</button>
-      <h2 class="vista-titulo" id="historialTitulo">Historial de Ventas</h2>
-    </div>
-    <div class="vista-body">
-      <div class="catalogo-busqueda" style="margin-bottom: 12px; display: flex; align-items: center; background: #f5f5f5; padding: 8px 12px; border-radius: 8px;">
-        <span class="seccion-icon" style="margin-right: 8px;">🔍</span>
-        <input type="text" id="busquedaHistorialInput" class="campo-input-flat" placeholder="Buscar por cliente o No. de nota..." style="border: none; background: transparent; width: 100%; outline: none; font-size: 16px;">
-      </div>
-      <div id="historialLista"></div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       VISTA: CLIENTES
-  ════════════════════════════════════════ -->
-  <div class="vista-secundaria" id="vistaClientes" style="display:none">
-    <div class="vista-header">
-      <button class="btn-back" onclick="cerrarVista('clientes')">← Volver</button>
-      <h2 class="vista-titulo">Clientes</h2>
-    </div>
-    <div class="vista-body" id="clientesLista"></div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       VISTA: FINANZAS
-  ════════════════════════════════════════ -->
-  <div class="vista-secundaria" id="vistaFinanzas" style="display:none">
-    <div class="vista-header">
-      <button class="btn-back" onclick="cerrarVista('finanzas')">← Volver</button>
-      <h2 class="vista-titulo">Finanzas</h2>
-    </div>
-    <div class="vista-body" id="finanzasBody"></div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       VISTA: CONFIGURACIÓN
-  ════════════════════════════════════════ -->
-  <div class="vista-secundaria" id="vistaConfig" style="display:none">
-    <div class="vista-header">
-      <button class="btn-back" onclick="cerrarVista('config')">← Volver</button>
-      <h2 class="vista-titulo">Configuración</h2>
-    </div>
-    <div class="vista-body">
-      <div class="card" style="margin:12px">
-        <div class="seccion-body" style="gap:12px">
-          <div class="campo-wrapper">
-            <label class="campo-label">NOMBRE DE LA EMPRESA</label>
-            <input type="text" id="configNombre" class="campo-input" placeholder="Mi Empresa S.A.">
-          </div>
-          <div class="campo-wrapper">
-            <label class="campo-label">MENSAJE AL PIE</label>
-            <input type="text" id="configMensaje" class="campo-input" placeholder="Gracias por su compra.">
-          </div>
-          <div class="campo-wrapper">
-            <label class="campo-label">FOLIO INICIAL</label>
-            <input type="text" id="configFolio" class="campo-input" placeholder="1" inputmode="numeric">
-          </div>
-          <div class="campo-wrapper">
-            <label class="campo-label">LOGO (URL de imagen)</label>
-            <input type="text" id="configLogoUrl" class="campo-input" placeholder="https://... o pega una URL">
-          </div>
-          <button class="btn-cobrar" onclick="guardarConfig()" style="margin-top:4px">Guardar Configuración</button>
-          <div style="margin-top: 25px; border-top: 1px dashed #e74c3c; padding-top: 20px;">
-            <p style="font-size: 11px; color: #e74c3c; margin-bottom: 10px; font-weight: 700; text-align: center;">ZONA DE PELIGRO</p>
-            <button type="button" onclick="confirmarReinicioTotal()" style="width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e74c3c; background: #fff; color: #e74c3c; font-weight: 700; cursor: pointer; font-family: inherit;">
-              ⚠️ REINICIAR APP (Borrar todo)
+            <label class="campo-label" for="fechaBtn">Fecha</label>
+            <button id="fechaBtn" type="button" class="campo-input fecha-btn">
+              <span>📅</span>
+              <span id="fechaTexto">--/--/----</span>
+              <span class="fecha-chevron">▾</span>
             </button>
           </div>
         </div>
+
+        <div class="campos-fila">
+          <div class="campo-wrapper flex1">
+            <label class="campo-label" for="clienteVendedor">Vendedor / Atendió</label>
+            <input id="clienteVendedor" type="text" class="campo-input" placeholder="Opcional" />
+          </div>
+          <div class="campo-wrapper flex1">
+            <label class="campo-label" for="clienteEmail">Correo</label>
+            <input id="clienteEmail" type="email" class="campo-input" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <div class="campo-wrapper">
+          <label class="campo-label" for="clienteDireccion">Dirección / Referencia</label>
+          <input id="clienteDireccion" type="text" class="campo-input" placeholder="Opcional" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Productos / Inventario -->
+    <section class="card">
+      <div class="seccion-header">
+        <span class="seccion-icon">📦</span>
+        <span class="seccion-title">PRODUCTOS</span>
+        <button id="btnCatalogo" type="button" class="catalogo-btn">📚 Catálogo / Stock</button>
+      </div>
+      <div class="tabla-headers">
+        <span class="tabla-header-text" style="width:56px;text-align:center;">CANT.</span>
+        <span class="tabla-header-text" style="width:88px;text-align:right;">PRECIO U.</span>
+        <span class="tabla-header-text" style="flex:1;text-align:right;padding-right:32px;">SUBTOTAL</span>
+      </div>
+      <div id="productosContainer"></div>
+      <button id="btnAgregarFila" type="button" class="agregar-fila-btn">+ Agregar fila</button>
+    </section>
+
+    <!-- Totales, IVA, Pago y Anticipo -->
+    <section class="card totales-card">
+      <div class="total-row">
+        <span class="total-label">SUBTOTAL</span>
+        <span id="totalSubtotal" class="total-value">$0.00</span>
+      </div>
+
+      <div class="total-row iva-row">
+        <div class="iva-toggle-row">
+          <label class="switch">
+            <input id="ivaToggle" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+          <span id="ivaLabel" class="total-label">I.V.A. (desactivado)</span>
+        </div>
+        <span id="totalIva" class="total-value" style="color:#aaa;">$0.00</span>
+      </div>
+
+      <div id="fiscalContainer" class="fiscal-container" style="display:none;">
+        <div class="fiscal-title">DATOS FISCALES (REQUERIDOS CON IVA)</div>
+        <div id="fiscalWarning" class="fiscal-warning" style="display:none;">
+          <span>⚠️</span>
+          <span>Completa RFC, Régimen Fiscal y Código Postal para cobrar.</span>
+        </div>
+        <input id="fiscalRFC" type="text" class="campo-input" placeholder="RFC (ej. XAXX010101000)" maxlength="13" />
+        <div class="campos-fila">
+          <input id="fiscalRegimen" type="text" class="campo-input flex1" placeholder="Régimen fiscal" />
+          <input id="fiscalCP" type="text" class="campo-input" style="width:110px;" placeholder="C.P." inputmode="numeric" maxlength="5" />
+        </div>
+        <label class="facturada-row" style="cursor:pointer;">
+          <input id="facturadaToggle" type="checkbox" style="display:none;" />
+          <span id="facturadaCheck" class="facturada-check">○</span>
+          <span id="facturadaLabel" class="facturada-label">¿Ya se facturó esta nota?</span>
+        </label>
+      </div>
+
+      <div class="total-final-row">
+        <span class="total-final-label">TOTAL</span>
+        <span id="totalFinal" class="total-final-value">$0.00</span>
+      </div>
+
+      <div class="metodo-pago-container">
+        <span class="campo-label">MÉTODO DE PAGO</span>
+        <div class="metodo-botones">
+          <button id="btnEfectivo" type="button" class="metodo-btn active">💵 Efectivo</button>
+          <button id="btnTransferencia" type="button" class="metodo-btn">🏦 Transferencia</button>
+        </div>
+      </div>
+
+      <div class="anticipo-container">
+        <label class="campo-label" for="anticipoInput">A CUENTA / ANTICIPO</label>
+        <input id="anticipoInput" type="text" class="anticipo-input" placeholder="0.00" inputmode="decimal" />
+      </div>
+
+      <div id="saldoRow" class="total-row saldo-row" style="display:none;">
+        <span id="saldoLabel" class="total-label">SALDO PENDIENTE</span>
+        <span id="saldoValue" class="total-value">$0.00</span>
+      </div>
+    </section>
+
+    <!-- Observaciones -->
+    <section class="card">
+      <div class="seccion-header">
+        <span class="seccion-icon">📝</span>
+        <span class="seccion-title">OBSERVACIONES</span>
+      </div>
+      <div class="seccion-body">
+        <textarea id="observaciones" class="observaciones-input" placeholder="Notas adicionales, tiempos de entrega, etc."></textarea>
+      </div>
+    </section>
+
+    <!-- Acciones -->
+    <div class="acciones-container">
+      <button id="btnGuardarPendiente" type="button" class="btn-por-cobrar">⏳ GUARDAR COMO PENDIENTE</button>
+      <button id="btnCobrar" type="button" class="btn-cobrar">🖨️ COBRAR E IMPRIMIR</button>
+      <button id="btnWhatsapp" type="button" class="btn-whatsapp">💬 ENVIAR POR WHATSAPP</button>
+      <p id="cobrarSubtext" class="cobrar-subtext">Total a cobrar: $0.00</p>
+    </div>
+  </main>
+
+  <!-- OVERLAY MENÚ -->
+  <div id="overlayMenu" class="overlay" style="display:none;">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header-row">
+        <span class="sheet-title">Menú del Negocio</span>
+        <button type="button" class="btn-close" onclick="cerrarMenu()">✕</button>
+      </div>
+      <div class="menu-lista">
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); accionNuevaNota();">
+          <div class="menu-opcion-icon" style="background:#eef1ff;">📝</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Nueva Nota</span>
+            <span class="menu-opcion-sub">Limpiar editor y crear folio siguiente</span>
+          </div>
+          <span class="menu-chevron">›</span>
+        </button>
+
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); mostrarVista('historial');">
+          <div class="menu-opcion-icon" style="background:#e8f8ef;">📚</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Historial de Ventas</span>
+            <span class="menu-opcion-sub">Ver, reimprimir, compartir o eliminar notas</span>
+          </div>
+          <span class="menu-chevron">›</span>
+        </button>
+
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); mostrarVista('pendientes');">
+          <div class="menu-opcion-icon" style="background:#fff0f0;">⏳</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Notas por Cobrar</span>
+            <span id="menuPendientesSub" class="menu-opcion-sub">Sin pendientes</span>
+          </div>
+          <span id="menuBadge" class="menu-badge-red" style="display:none;">0</span>
+          <span class="menu-chevron">›</span>
+        </button>
+
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); abrirCatalogo();">
+          <div class="menu-opcion-icon" style="background:#fff8e6;">📦</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Catálogo y Stock</span>
+            <span class="menu-opcion-sub">Existencias, alertas de poco stock y precios</span>
+          </div>
+          <span class="menu-chevron">›</span>
+        </button>
+
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); mostrarVista('gastos');">
+          <div class="menu-opcion-icon" style="background:#fff4eb;">💸</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Gastos del Negocio</span>
+            <span class="menu-opcion-sub">Registrar egresos por categoría y mes</span>
+          </div>
+          <span class="menu-chevron">›</span>
+        </button>
+
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); mostrarVista('iva');">
+          <div class="menu-opcion-icon" style="background:#f5f0ff;">🧾</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Notas con I.V.A.</span>
+            <span class="menu-opcion-sub">Consultar notas fiscales</span>
+          </div>
+          <span class="menu-chevron">›</span>
+        </button>
+
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); mostrarVista('clientes');">
+          <div class="menu-opcion-icon" style="background:#eef7ff;">👥</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Clientes</span>
+            <span class="menu-opcion-sub">Historial acumulado por cliente</span>
+          </div>
+          <span class="menu-chevron">›</span>
+        </button>
+
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); mostrarVista('finanzas');">
+          <div class="menu-opcion-icon" style="background:#e8fbf5;">📊</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Finanzas</span>
+            <span class="menu-opcion-sub">Ventas, cobros, pendientes y gastos</span>
+          </div>
+          <span class="menu-chevron">›</span>
+        </button>
+
+        <button type="button" class="menu-opcion" onclick="cerrarMenu(); mostrarVista('config');">
+          <div class="menu-opcion-icon" style="background:#f2f4f8;">⚙️</div>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Configuración</span>
+            <span class="menu-opcion-sub">Nombre, mensaje, folio inicial y logo</span>
+          </div>
+          <span class="menu-chevron">›</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════
-       VISTA: GASTOS
-  ════════════════════════════════════════ -->
-  <div class="vista-secundaria" id="vistaGastos" style="display:none">
-    <div class="vista-header">
-      <button class="btn-back" onclick="cerrarVista('gastos')">← Volver</button>
-      <h2 class="vista-titulo">Gastos del Negocio</h2>
-    </div>
-    <div class="vista-body">
-
-      <!-- KPIs rápidos -->
-      <div class="finanzas-resumen" style="margin-bottom:10px">
-        <div class="finanza-kpi">
-          <span class="finanza-kpi-label">HOY</span>
-          <span class="finanza-kpi-value" id="gastoHoy" style="color:#e74c3c">$0.00</span>
-          <span class="finanza-kpi-sub">egresos del día</span>
-        </div>
-        <div class="finanza-kpi">
-          <span class="finanza-kpi-label">ESTE MES</span>
-          <span class="finanza-kpi-value" id="gastoMes" style="color:#e67e22">$0.00</span>
-          <span class="finanza-kpi-sub">egresos del mes</span>
-        </div>
+  <!-- OVERLAY CATÁLOGO Y STOCK -->
+  <div id="overlayCatalogo" class="overlay" style="display:none;">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header-row">
+        <span class="sheet-title">Catálogo y Control de Stock</span>
+        <button id="btnCerrarCatalogo" type="button" class="btn-close">✕</button>
       </div>
 
-      <!-- Formulario nuevo gasto -->
-      <div class="card">
-        <div class="seccion-header" style="background:#e67e22">
-          <span class="seccion-icon">💸</span>
-          <span class="seccion-title">REGISTRAR NUEVO GASTO</span>
-        </div>
-        <div class="seccion-body" style="gap:10px">
-
-          <div class="campo-wrapper">
-            <label class="campo-label">CATEGORÍA</label>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <button class="cat-btn active" onclick="setGastoCat(this, '⛽ Combustible')">⛽ Gas</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '🏠 Renta')">🏠 Renta</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '🔧 Materiales')">🔧 Materiales</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '💡 Servicios')">💡 Servicios</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '🍽️ Comida')">🍽️ Comida</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '🚗 Transporte')">🚗 Transporte</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '💼 Personal')">💼 Personal</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '📦 Inventario')">📦 Inventario</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '🖨️ Equipo')">🖨️ Equipo</button>
-              <button class="cat-btn" onclick="setGastoCat(this, '📋 Otros')">📋 Otros</button>
-            </div>
-          </div>
-
-          <div class="campo-wrapper">
-            <label class="campo-label">CONCEPTO</label>
-            <input type="text" id="gastoConcepto" class="campo-input" placeholder="¿En qué se gastó?">
-          </div>
-
-          <div class="campos-fila">
-            <div class="campo-wrapper flex1">
-              <label class="campo-label">MONTO ($)</label>
-              <input type="text" id="gastoMonto" class="campo-input" placeholder="0.00" inputmode="decimal">
-            </div>
-            <div class="campo-wrapper flex1">
-              <label class="campo-label">FECHA</label>
-              <input type="date" id="gastoFecha" class="campo-input">
-            </div>
-          </div>
-
-          <button class="btn-cobrar" onclick="accionGuardarGasto()" style="background:#e67e22">
-            ✓ Registrar Gasto
-          </button>
-        </div>
+      <div class="catalogo-nuevo">
+        <input id="catalogoNombreInput" type="text" class="campo-input flex1" placeholder="Producto" />
+        <input id="catalogoPrecioInput" type="number" class="campo-input" placeholder="Precio" step="0.01" min="0" style="width:82px;" />
+        <input id="catalogoStockInput" type="number" class="campo-input" placeholder="Stock" min="0" style="width:74px;" />
+        <button id="btnCatalogoAgregar" type="button" class="btn-catalogo-add">+</button>
       </div>
 
-      <!-- Lista de gastos con navegador de mes -->
-      <div id="listaGastos" style="margin-top:10px"></div>
+      <div id="catalogoBusquedaWrap" class="catalogo-busqueda" style="display:none;">
+        <span>🔍</span>
+        <input id="catalogoBusqueda" type="text" class="campo-input-flat" placeholder="Buscar producto en catálogo..." />
+      </div>
 
+      <div id="catalogoLista" class="catalogo-lista">
+        <div id="catalogoEmpty" class="catalogo-empty"></div>
+      </div>
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════
-       VISTA: INVENTARIO
-  ════════════════════════════════════════ -->
-  <div class="vista-secundaria" id="vistaInventario" style="display:none">
+  <!-- OVERLAY SELECTOR DE FECHA -->
+  <div id="overlayFecha" class="overlay" style="display:none;">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Seleccionar Fecha</div>
+      <div class="fecha-campos">
+        <div class="fecha-campo-group">
+          <label class="campo-label" for="fechaDia">Día</label>
+          <input id="fechaDia" type="number" class="fecha-campo-input" min="1" max="31" inputmode="numeric" />
+        </div>
+        <div class="fecha-campo-group">
+          <label class="campo-label" for="fechaMes">Mes</label>
+          <input id="fechaMes" type="number" class="fecha-campo-input" min="1" max="12" inputmode="numeric" />
+        </div>
+        <div class="fecha-campo-group">
+          <label class="campo-label" for="fechaAnio">Año</label>
+          <input id="fechaAnio" type="number" class="fecha-campo-input fecha-campo-anio" min="2000" max="2099" inputmode="numeric" />
+        </div>
+      </div>
+      <div id="fechaMesPreview" class="fecha-mes-preview"></div>
+      <div class="fecha-botones">
+        <button id="btnFechaCancelar" type="button" class="btn-outline-gray">Cancelar</button>
+        <button id="btnFechaConfirmar" type="button" class="btn-primary-small">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA HISTORIAL -->
+  <section id="vistaHistorial" class="vista-secundaria" style="display:none;">
     <div class="vista-header">
-      <button class="btn-back" onclick="cerrarVista('inventario')">← Volver</button>
-      <h2 class="vista-titulo">Inventario</h2>
+      <button type="button" class="btn-back" onclick="cerrarVista('historial')">‹ Atrás</button>
+      <span id="historialTitulo" class="vista-titulo">Historial de Ventas</span>
     </div>
     <div class="vista-body">
+      <div class="catalogo-busqueda" style="margin-bottom:10px;">
+        <span>🔍</span>
+        <input id="historialBuscar" type="text" class="campo-input-flat" placeholder="Buscar por cliente o número de nota..." />
+      </div>
+      <div id="historialLista"></div>
+    </div>
+  </section>
 
-      <!-- KPIs rápidos de inventario -->
-      <div class="finanzas-resumen" style="margin-bottom:10px">
+  <!-- VISTA GASTOS -->
+  <section id="vistaGastos" class="vista-secundaria" style="display:none;">
+    <div class="vista-header">
+      <button type="button" class="btn-back" onclick="cerrarVista('gastos')">‹ Atrás</button>
+      <span class="vista-titulo">Gastos del Negocio</span>
+    </div>
+    <div class="vista-body">
+      <div class="finanzas-resumen">
         <div class="finanza-kpi">
-          <span class="finanza-kpi-label">PRODUCTOS</span>
-          <span class="finanza-kpi-value" id="invTotalProductos" style="color:#2B3A8F">0</span>
-          <span class="finanza-kpi-sub" id="invTotalUnidades">0 unidades en stock</span>
+          <span class="finanza-kpi-label">GASTOS HOY</span>
+          <span id="gastoHoy" class="finanza-kpi-value">$0.00</span>
+          <span class="finanza-kpi-sub">Día actual</span>
         </div>
         <div class="finanza-kpi">
-          <span class="finanza-kpi-label">ALERTAS STOCK</span>
-          <span class="finanza-kpi-value" id="invTotalAlertas" style="color:#e74c3c">0</span>
-          <span class="finanza-kpi-sub">bajos o agotados</span>
+          <span class="finanza-kpi-label">GASTOS DEL MES</span>
+          <span id="gastoMes" class="finanza-kpi-value">$0.00</span>
+          <span class="finanza-kpi-sub">Mes actual</span>
         </div>
       </div>
 
-      <!-- Formulario: Agregar producto al inventario -->
-      <div class="card" style="margin-bottom:10px">
-        <div class="seccion-header">
+      <div class="card" style="margin-bottom:12px;">
+        <div class="seccion-header" style="background:#e67e22;">
           <span class="seccion-icon">➕</span>
-          <span class="seccion-title">AGREGAR PRODUCTO AL INVENTARIO</span>
+          <span class="seccion-title">REGISTRAR GASTO</span>
         </div>
-        <div class="seccion-body" style="gap:10px">
-          <div class="campo-wrapper">
-            <label class="campo-label">NOMBRE DEL PRODUCTO</label>
-            <input type="text" id="invNombre" class="campo-input" placeholder="Ej. Playera negra M, Taza blanca...">
+        <div class="seccion-body">
+          <div class="categorias-grid">
+            <button type="button" class="cat-btn active" onclick="setGastoCat(this, '⛽ Combustible')">⛽ Combustible</button>
+            <button type="button" class="cat-btn" onclick="setGastoCat(this, '🏠 Renta')">🏠 Renta</button>
+            <button type="button" class="cat-btn" onclick="setGastoCat(this, '🔧 Materiales')">🔧 Materiales</button>
+            <button type="button" class="cat-btn" onclick="setGastoCat(this, '💡 Servicios')">💡 Servicios</button>
+            <button type="button" class="cat-btn" onclick="setGastoCat(this, '📦 Insumos')">📦 Insumos</button>
+            <button type="button" class="cat-btn" onclick="setGastoCat(this, '🛠️ Mantenimiento')">🛠️ Mantenimiento</button>
+            <button type="button" class="cat-btn" onclick="setGastoCat(this, '🍔 Comidas')">🍔 Comidas</button>
+            <button type="button" class="cat-btn" onclick="setGastoCat(this, '📌 Otros')">📌 Otros</button>
           </div>
+
+          <input id="gastoConcepto" type="text" class="campo-input" placeholder="Concepto del gasto" />
           <div class="campos-fila">
-            <div class="campo-wrapper flex1">
-              <label class="campo-label">CÓDIGO (OPCIONAL)</label>
-              <input type="text" id="invCodigo" class="campo-input" placeholder="Auto si se deja vacío" style="text-transform:uppercase">
-            </div>
-            <div class="campo-wrapper flex1">
-              <label class="campo-label">PRECIO VENTA ($)</label>
-              <input type="text" id="invPrecio" class="campo-input" placeholder="0.00" inputmode="decimal">
-            </div>
+            <input id="gastoMonto" type="number" class="campo-input flex1" placeholder="Monto ($)" step="0.01" min="0" />
+            <input id="gastoFecha" type="date" class="campo-input" style="width:155px;" />
           </div>
-          <div class="campos-fila">
-            <div class="campo-wrapper flex1">
-              <label class="campo-label">STOCK INICIAL</label>
-              <input type="text" id="invStock" class="campo-input" placeholder="0" inputmode="numeric">
-            </div>
-            <div class="campo-wrapper flex1">
-              <label class="campo-label">ALERTA STOCK MÍNIMO</label>
-              <input type="text" id="invMinimo" class="campo-input" placeholder="5" inputmode="numeric">
-            </div>
-          </div>
-          <button class="btn-cobrar" onclick="accionAgregarInventario()" style="background:#2B3A8F">
-            ✓ Guardar en Inventario
-          </button>
+          <button type="button" class="btn-primary-full" style="background:#e67e22;" onclick="accionGuardarGasto()">Guardar Gasto</button>
         </div>
       </div>
 
-      <!-- Buscador y filtro de alertas -->
-      <div class="card" style="margin-bottom:10px">
-        <div class="seccion-body" style="gap:8px">
-          <div class="catalogo-busqueda">
-            <span>🔍</span>
-            <input type="text" id="invBusqueda" class="campo-input-flat" placeholder="Buscar por nombre o código..." oninput="renderizarInventario()">
-          </div>
-          <div style="display:flex;gap:6px">
-            <button class="cat-btn active" id="invFiltroTodos" onclick="setFiltroInventario('todos', this)">Todos</button>
-            <button class="cat-btn" id="invFiltroBajos" onclick="setFiltroInventario('bajos', this)">⚠️ Stock Bajo</button>
-            <button class="cat-btn" id="invFiltroMovs" onclick="setFiltroInventario('movimientos', this)">📋 Movimientos</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Listado dinámico -->
-      <div id="listaInventario"></div>
-
+      <div id="listaGastos"></div>
     </div>
-  </div>
+  </section>
 
-  <!-- TOAST NOTIFICACIÓN -->
-  <div class="toast" id="toast"></div>
+  <!-- VISTA CLIENTES -->
+  <section id="vistaClientes" class="vista-secundaria" style="display:none;">
+    <div class="vista-header">
+      <button type="button" class="btn-back" onclick="cerrarVista('clientes')">‹ Atrás</button>
+      <span class="vista-titulo">Clientes</span>
+    </div>
+    <div id="clientesLista" class="vista-body"></div>
+  </section>
+
+  <!-- VISTA FINANZAS -->
+  <section id="vistaFinanzas" class="vista-secundaria" style="display:none;">
+    <div class="vista-header">
+      <button type="button" class="btn-back" onclick="cerrarVista('finanzas')">‹ Atrás</button>
+      <span class="vista-titulo">Finanzas</span>
+    </div>
+    <div id="finanzasBody" class="vista-body"></div>
+  </section>
+
+  <!-- VISTA CONFIGURACIÓN -->
+  <section id="vistaConfig" class="vista-secundaria" style="display:none;">
+    <div class="vista-header">
+      <button type="button" class="btn-back" onclick="cerrarVista('config')">‹ Atrás</button>
+      <span class="vista-titulo">Configuración</span>
+    </div>
+    <div class="vista-body">
+      <div class="card">
+        <div class="seccion-header">
+          <span class="seccion-icon">⚙️</span>
+          <span class="seccion-title">DATOS DEL NEGOCIO</span>
+        </div>
+        <div class="seccion-body">
+          <div class="campo-wrapper">
+            <label class="campo-label" for="configNombre">Nombre del negocio</label>
+            <input id="configNombre" type="text" class="campo-input" placeholder="Ej. Megaserigrafica" />
+          </div>
+          <div class="campo-wrapper">
+            <label class="campo-label" for="configMensaje">Mensaje al pie de nota</label>
+            <input id="configMensaje" type="text" class="campo-input" placeholder="Gracias por su compra." />
+          </div>
+          <div class="campo-wrapper">
+            <label class="campo-label" for="configFolio">Folio inicial</label>
+            <input id="configFolio" type="number" class="campo-input" min="1" value="1" />
+          </div>
+          <div class="campo-wrapper">
+            <label class="campo-label" for="configLogoUrl">URL del logo (opcional)</label>
+            <input id="configLogoUrl" type="url" class="campo-input" placeholder="https://..." />
+          </div>
+          <button type="button" class="btn-primary-full" onclick="guardarConfig()">Guardar Configuración</button>
+          <button type="button" class="btn-card-action danger" style="margin-top:8px;" onclick="confirmarReinicioTotal()">⚠️ Reiniciar todos los datos</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
 
   <script src="script.js"></script>
 </body>
