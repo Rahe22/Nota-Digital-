@@ -1344,6 +1344,53 @@ html, body {
 }
 
 /* =============================================
+   INVENTARIO
+   ============================================= */
+.inv-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inv-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.inv-card-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.inv-stock-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #eafaf1;
+  color: #27ae60;
+}
+
+.inv-stock-badge.bajo {
+  background: #fff5f5;
+  color: #e74c3c;
+}
+
+.inv-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* =============================================
    BOTONES DE CATEGORÍA (Gastos)
    ============================================= */
 .categorias-grid {
@@ -1448,66 +1495,4 @@ html, body {
     margin: 0 !important;
     padding: 2mm !important;
     background: #fff !important;
-    color: #000 !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 11px !important;
-    line-height: 1.3 !important;
-  }
-
-  .navbar,
-  .overlay,
-  .vista-secundaria,
-  .acciones-container,
-  .cobrar-subtext,
-  .catalogo-btn,
-  .btn-star,
-  .btn-delete-fila,
-  .agregar-fila-btn,
-  .toast {
-    display: none !important;
-  }
-
-  .main-scroll {
-    margin: 0 !important;
-    padding: 0 !important;
-    max-width: 100% !important;
-    gap: 6px !important;
-  }
-
-  .card,
-  .cobrada-banner {
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    border: none !important;
-    background: #fff !important;
-  }
-
-  .seccion-header {
-    background: #fff !important;
-    color: #000 !important;
-    border-top: 1px dashed #000 !important;
-    border-bottom: 1px dashed #000 !important;
-    padding: 4px 0 !important;
-  }
-
-  .seccion-title,
-  .seccion-icon {
-    color: #000 !important;
-  }
-
-  .campo-input,
-  .celda-cantidad,
-  .celda-precio,
-  .celda-descripcion,
-  .observaciones-input,
-  .anticipo-input {
-    border: none !important;
-    background: transparent !important;
-    color: #000 !important;
-    padding: 2px 0 !important;
-    font-size: 11px !important;
-  }
-}
-```[span_0](start_span)[span_0](end_span)[span_1](start_span)[span_1](end_span)
-
-Avísame cuando lo tengas y seguimos con `script.js`.
+    color: #000 !important
