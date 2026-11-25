@@ -17,7 +17,7 @@ html, body {
 }
 
 /* =============================================
-   NAVBAR
+   NAVBAR (Título izquierda, Menú derecha)
 ============================================= */
 .navbar {
   position: fixed;
@@ -39,6 +39,12 @@ html, body {
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.3px;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .navbar-badge-wrap {
@@ -64,7 +70,7 @@ html, body {
   background: none;
   border: none;
   color: #fff;
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   cursor: pointer;
   padding: 6px 4px;
   line-height: 1;
@@ -976,7 +982,7 @@ html, body {
 }
 
 /* =============================================
-   VISTAS SECUNDARIAS (HISTORIAL, CLIENTES, FINANZAS, GASTOS, CONFIG, INVENTARIO)
+   VISTAS SECUNDARIAS
 ============================================= */
 .vista-secundaria {
   position: fixed;
@@ -1222,4 +1228,130 @@ html, body {
   color: #1a1a2e;
 }
 
-.
+.inv-meta {
+  font-size: 11px;
+  color: #777;
+  margin-top: 2px;
+}
+
+.inv-stock-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.inv-stock-pill.ok {
+  background: #E8F8EF;
+  color: #27ae60;
+}
+
+.inv-stock-pill.bajo {
+  background: #FFF3E0;
+  color: #e67e22;
+}
+
+.inv-stock-pill.agotado {
+  background: #FFEBEE;
+  color: #e74c3c;
+}
+
+.inv-controles {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inv-btn {
+  flex: 1;
+  min-width: 72px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid #dde0e8;
+  background: #F4F6FA;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a2e;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.inv-btn.entrada {
+  border-color: #27ae60;
+  color: #27ae60;
+  background: #F0FBF4;
+}
+
+.inv-btn.salida {
+  border-color: #e67e22;
+  color: #e67e22;
+  background: #FFF8F0;
+}
+
+.inv-btn.usar {
+  border-color: #2B3A8F;
+  color: #2B3A8F;
+  background: #EEF0FF;
+}
+
+/* =============================================
+   TOAST
+============================================= */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1a1a2e;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 500;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* =============================================
+   IMPRESIÓN TÉRMICA 58MM
+============================================= */
+@media print {
+  .navbar,
+  .acciones-container,
+  .btn-menu,
+  .btn-delete-fila,
+  .btn-star,
+  .agregar-fila-btn,
+  .catalogo-btn,
+  .overlay,
+  .vista-secundaria,
+  .toast {
+    display: none !important;
+  }
+
+  body,
+  .main-scroll {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 11px !important;
+    max-width: 100% !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
