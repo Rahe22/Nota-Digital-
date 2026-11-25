@@ -1,5 +1,5 @@
 // =============================================
-// NOTA DE REMISIÓN — script.js (Optimizado 58mm)
+// NOTA DE REMISIÓN — script.js (Optimizado 58mm + Inventario Etapa 1)
 // Vanilla HTML + CSS + JavaScript puro
 // =============================================
 
@@ -17,6 +17,8 @@ let config = {
   logoUrl: ''
 };
 let gastos = [];
+let inventario = [];
+let movimientosInv = [];
 
 // ─────────────────────────────────────────────
 // UTILIDADES
@@ -70,10 +72,14 @@ function cargarDatos() {
   const cf = localStorage.getItem('nr_config');
   const na = localStorage.getItem('nr_notaActual');
   const g = localStorage.getItem('nr_gastos');
+  const inv = localStorage.getItem('nr_inventario');
+  const mov = localStorage.getItem('nr_movimientos_inv');
 
   notas = n ? JSON.parse(n) : [];
   catalogo = c ? JSON.parse(c) : [];
   gastos = g ? JSON.parse(g) : [];
+  inventario = inv ? JSON.parse(inv) : [];
+  movimientosInv = mov ? JSON.parse(mov) : [];
   if (cf) config = { ...config, ...JSON.parse(cf) };
   notaActual = na ? JSON.parse(na) : null;
 }
@@ -181,6 +187,12 @@ function guardarCatalogo() {
 
 function guardarGastos() {
   localStorage.setItem('nr_gastos', JSON.stringify(gastos));
+}
+
+function guardarInventario() {
+  localStorage.setItem('nr_inventario', JSON.stringify(inventario));
+  localStorage.setItem('nr_movimientos_inv', JSON.stringify(movimientosInv));
+  actualizarBadgeInventario();
 }
 
 function guardarConfig() {
@@ -527,23 +539,18 @@ function recalcularTotales() {
 
 function actualizarSubtextCobrar(total) {
   const el = document.getElementById('cobrarSubtext');
-  const ivaOk = verificarIvaOk();
   const total2 = total !== undefined ? total : calcTotal(calcSubtotalGeneral(), notaActual.ivaActivo);
 
-  if (!ivaOk) {
-    el.textContent = '⚠️ Completa los datos fiscales para cobrar';
-  } else if (notaActual.cobrada) {
+  if (notaActual.cobrada) {
     el.textContent = 'Nota cobrada · Toca para reimprimir o compartir';
   } else {
     el.textContent = 'Total a cobrar: ' + formatCurrency(total2);
   }
 }
 
+// Permite cobrar con IVA activo aunque falten datos fiscales
 function verificarIvaOk() {
-  if (!notaActual.ivaActivo) return true;
-  const df = notaActual.datosFactura;
-  if (!df) return false;
-  return !!(df.rfc && df.rfc.trim() && df.regimenFiscal && df.regimenFiscal.trim() && df.codigoPostal && df.codigoPostal.trim());
+  return true;
 }
 
 // ─────────────────────────────────────────────
@@ -563,11 +570,7 @@ function actualizarSeccionIva() {
 
 function actualizarFiscalWarning() {
   const warning = document.getElementById('fiscalWarning');
-  if (notaActual.ivaActivo && !verificarIvaOk()) {
-    warning.style.display = 'flex';
-  } else {
-    warning.style.display = 'none';
-  }
+  if (warning) warning.style.display = 'none';
 }
 
 function actualizarFacuturadaDisplay() {
@@ -674,6 +677,7 @@ function accionCobrar() {
       notas.push(copia);
     }
     guardarNotas();
+    descontarInventarioPorVenta(notaActual);
 
     document.getElementById('cobradaBadge').style.display = 'flex';
     document.getElementById('cobradaBanner').style.display = 'flex';
@@ -1085,6 +1089,7 @@ function seleccionarCliente(c) {
 
 function abrirMenu() {
   actualizarBadgePendientes();
+  actualizarBadgeInventario();
   document.getElementById('overlayMenu').style.display = 'flex';
 }
 
@@ -1093,7 +1098,6 @@ function cerrarMenu() {
 }
 
 function mostrarVista(tipo) {
-  // Limpia el buscador cada vez que abres una vista del historial
   const inputBusqueda = document.getElementById('busquedaHistorialInput');
   if (inputBusqueda && (tipo === 'historial' || tipo === 'pendientes' || tipo === 'iva')) {
     inputBusqueda.value = '';
@@ -1110,6 +1114,9 @@ function mostrarVista(tipo) {
   } else if (tipo === 'gastos') {
     actualizarPantallaGastos();
     document.getElementById('vistaGastos').style.display = 'flex';
+  } else if (tipo === 'inventario') {
+    renderizarInventario();
+    document.getElementById('vistaInventario').style.display = 'flex';
   } else if (tipo === 'iva') {
     renderizarHistorial('iva');
     document.getElementById('historialTitulo').textContent = 'Notas con I.V.A.';
@@ -1135,6 +1142,7 @@ function cerrarVista(tipo) {
   else if (tipo === 'finanzas') document.getElementById('vistaFinanzas').style.display = 'none';
   else if (tipo === 'config') document.getElementById('vistaConfig').style.display = 'none';
   else if (tipo === 'gastos') document.getElementById('vistaGastos').style.display = 'none';
+  else if (tipo === 'inventario') document.getElementById('vistaInventario').style.display = 'none';
 }
 
 function renderizarHistorial(filtro) {
@@ -1142,28 +1150,25 @@ function renderizarHistorial(filtro) {
   if (!lista) return;
   lista.innerHTML = '';
 
-  // 1. Leer lo que se escribe en el buscador
   const inputBusqueda = document.getElementById('busquedaHistorialInput');
   const textoBusqueda = inputBusqueda ? inputBusqueda.value.trim().toLowerCase() : '';
 
   let notasFiltradas = notas.slice().sort(function(a, b) { return (b.numero || 0) - (a.numero || 0); });
 
-  // 2. Filtrar por la pestaña seleccionada
   if (filtro === 'pendientes') {
     notasFiltradas = notasFiltradas.filter(function(n) { return !n.cobrada; });
   } else if (filtro === 'iva') {
     notasFiltradas = notasFiltradas.filter(function(n) { return n.ivaActivo; });
   }
 
-  // 3. Filtrar por nombre de cliente o número de nota
   if (textoBusqueda) {
     notasFiltradas = notasFiltradas.filter(function(n) {
       const nombreCliente = (n.cliente && n.cliente.nombre) ? n.cliente.nombre.toLowerCase() : '';
       const numeroNota = String(n.numero || '');
       const numeroNotaFormateado = String(n.numero || '').padStart(4, '0');
 
-      return nombreCliente.includes(textoBusqueda) || 
-             numeroNota.includes(textoBusqueda) || 
+      return nombreCliente.includes(textoBusqueda) ||
+             numeroNota.includes(textoBusqueda) ||
              numeroNotaFormateado.includes(textoBusqueda);
     });
   }
@@ -1173,7 +1178,6 @@ function renderizarHistorial(filtro) {
     return;
   }
 
-  // 4. Renderizar tarjetas de notas
   notasFiltradas.forEach(function(nota) {
     const sub = nota.productos.reduce(function(s, p) {
       return s + (parseFloat(p.cantidad) || 0) * (parseFloat(p.precioUnitario) || 0);
@@ -1500,7 +1504,6 @@ function inicializarEventos() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Listener para la barra de búsqueda del Historial
   const inputBusquedaHistorial = document.getElementById('busquedaHistorialInput');
   if (inputBusquedaHistorial) {
     inputBusquedaHistorial.addEventListener('input', function() {
@@ -1528,6 +1531,7 @@ function inicializarEventos() {
 
 function init() {
   cargarDatos();
+  actualizarBadgeInventario();
   inicializarEventos();
 
   if (notaActual) {
@@ -1687,5 +1691,298 @@ function actualizarPantallaGastos() {
       '</div>';
 
     lista.appendChild(item);
+  });
+}
+
+// ─────────────────────────────────────────────
+// MÓDULO DE INVENTARIO SIMPLE (ETAPA 1)
+// ─────────────────────────────────────────────
+
+let filtroInventarioActual = 'todos';
+
+function generarCodigoProducto() {
+  const num = inventario.length + 1;
+  return 'PROD-' + String(num).padStart(4, '0');
+}
+
+function actualizarBadgeInventario() {
+  const bajos = inventario.filter(function(p) {
+    return (parseFloat(p.stock) || 0) <= (parseFloat(p.minimo) || 0);
+  }).length;
+
+  const badge = document.getElementById('menuInventarioBadge');
+  const sub = document.getElementById('menuInventarioSub');
+  if (badge) {
+    badge.style.display = bajos > 0 ? 'flex' : 'none';
+    badge.textContent = bajos;
+  }
+  if (sub) {
+    sub.textContent = bajos > 0
+      ? bajos + ' producto' + (bajos !== 1 ? 's' : '') + ' con stock bajo'
+      : inventario.length + ' productos registrados';
+  }
+}
+
+function setFiltroInventario(filtro, btn) {
+  filtroInventarioActual = filtro;
+  if (btn && btn.parentElement) {
+    btn.parentElement.querySelectorAll('.cat-btn').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+  }
+  renderizarInventario();
+}
+
+function accionAgregarInventario() {
+  const nombre = document.getElementById('invNombre').value.trim();
+  const codigoInput = document.getElementById('invCodigo').value.trim().toUpperCase();
+  const precio = parseFloat(limpiarNumero(document.getElementById('invPrecio').value)) || 0;
+  const stock = parseFloat(limpiarNumero(document.getElementById('invStock').value)) || 0;
+  const minimo = parseFloat(limpiarNumero(document.getElementById('invMinimo').value));
+  const stockMinimo = isNaN(minimo) ? 5 : minimo;
+
+  if (!nombre) {
+    mostrarToast('⚠️ Escribe el nombre del producto');
+    return;
+  }
+
+  const codigo = codigoInput || generarCodigoProducto();
+  const duplicado = inventario.find(function(p) {
+    return p.codigo.toLowerCase() === codigo.toLowerCase();
+  });
+  if (duplicado) {
+    mostrarToast('⚠️ Ese código ya existe en inventario');
+    return;
+  }
+
+  const nuevo = {
+    id: generarId(),
+    codigo: codigo,
+    nombre: nombre,
+    precio: precio,
+    stock: stock,
+    minimo: stockMinimo
+  };
+
+  inventario.unshift(nuevo);
+  if (stock > 0) {
+    registrarMovimientoInv(nuevo, 'entrada', stock, 'Stock inicial');
+  }
+  guardarInventario();
+
+  agregarAlCatalogo(nombre, precio ? String(precio) : '');
+
+  document.getElementById('invNombre').value = '';
+  document.getElementById('invCodigo').value = '';
+  document.getElementById('invPrecio').value = '';
+  document.getElementById('invStock').value = '';
+  document.getElementById('invMinimo').value = '';
+
+  renderizarInventario();
+  mostrarToast('Producto agregado al inventario ✓');
+}
+
+function registrarMovimientoInv(prod, tipo, cantidad, motivo) {
+  movimientosInv.unshift({
+    id: generarId(),
+    productoId: prod.id,
+    codigo: prod.codigo,
+    nombre: prod.nombre,
+    tipo: tipo,
+    cantidad: cantidad,
+    motivo: motivo || '',
+    fecha: new Date().toISOString()
+  });
+  if (movimientosInv.length > 300) {
+    movimientosInv = movimientosInv.slice(0, 300);
+  }
+}
+
+function moverStockInventario(id, tipo) {
+  const prod = inventario.find(function(p) { return p.id === id; });
+  if (!prod) return;
+
+  const textoAccion = tipo === 'entrada' ? 'ENTRADA (sumar unidades)' : 'SALIDA (restar unidades)';
+  const cantStr = prompt(prod.nombre + '\nStock actual: ' + prod.stock + '\n\nCantidad de ' + textoAccion + ':', '1');
+  if (cantStr === null) return;
+
+  const cant = parseFloat(limpiarNumero(cantStr));
+  if (isNaN(cant) || cant <= 0) {
+    mostrarToast('⚠️ Cantidad no válida');
+    return;
+  }
+
+  const motivo = prompt('Motivo (opcional, ej. Compra proveedor, Merma, Ajuste):', tipo === 'entrada' ? 'Compra / Resurtido' : 'Salida manual') || '';
+
+  if (tipo === 'entrada') {
+    prod.stock = (parseFloat(prod.stock) || 0) + cant;
+  } else {
+    prod.stock = Math.max(0, (parseFloat(prod.stock) || 0) - cant);
+  }
+
+  registrarMovimientoInv(prod, tipo, cant, motivo);
+  guardarInventario();
+  renderizarInventario();
+  mostrarToast((tipo === 'entrada' ? '+' : '−') + cant + ' en ' + prod.nombre + ' ✓');
+}
+
+function editarProductoInventario(id) {
+  const prod = inventario.find(function(p) { return p.id === id; });
+  if (!prod) return;
+
+  const nuevoStockStr = prompt('Editar stock exacto de "' + prod.nombre + '":', String(prod.stock));
+  if (nuevoStockStr === null) return;
+  const nuevoStock = parseFloat(limpiarNumero(nuevoStockStr));
+  if (isNaN(nuevoStock) || nuevoStock < 0) {
+    mostrarToast('⚠️ Stock no válido');
+    return;
+  }
+
+  const nuevoPrecioStr = prompt('Precio de venta ($):', String(prod.precio || 0));
+  if (nuevoPrecioStr !== null) {
+    const p = parseFloat(limpiarNumero(nuevoPrecioStr));
+    if (!isNaN(p) && p >= 0) prod.precio = p;
+  }
+
+  const nuevoMinStr = prompt('Alerta de stock mínimo:', String(prod.minimo || 0));
+  if (nuevoMinStr !== null) {
+    const m = parseFloat(limpiarNumero(nuevoMinStr));
+    if (!isNaN(m) && m >= 0) prod.minimo = m;
+  }
+
+  const diff = nuevoStock - (parseFloat(prod.stock) || 0);
+  prod.stock = nuevoStock;
+  if (diff !== 0) {
+    registrarMovimientoInv(prod, diff > 0 ? 'entrada' : 'salida', Math.abs(diff), 'Ajuste directo de stock');
+  }
+
+  guardarInventario();
+  renderizarInventario();
+  mostrarToast('Producto actualizado ✓');
+}
+
+function eliminarProductoInventario(id) {
+  const prod = inventario.find(function(p) { return p.id === id; });
+  if (!prod) return;
+  if (!confirm('¿Eliminar "' + prod.nombre + '" del inventario?')) return;
+  inventario = inventario.filter(function(p) { return p.id !== id; });
+  guardarInventario();
+  renderizarInventario();
+  mostrarToast('Producto eliminado');
+}
+
+function descontarInventarioPorVenta(nota) {
+  if (!nota || !nota.productos) return;
+  let huboCambios = false;
+
+  nota.productos.forEach(function(item) {
+    const desc = (item.descripcion || '').trim().toLowerCase();
+    const cant = parseFloat(item.cantidad) || 0;
+    if (!desc || cant <= 0) return;
+
+    const prod = inventario.find(function(p) {
+      return p.nombre.trim().toLowerCase() === desc || (item.codigo && p.codigo.toLowerCase() === item.codigo.toLowerCase());
+    });
+
+    if (prod) {
+      prod.stock = Math.max(0, (parseFloat(prod.stock) || 0) - cant);
+      registrarMovimientoInv(prod, 'salida', cant, 'Venta Nota #' + String(nota.numero).padStart(4, '0'));
+      huboCambios = true;
+    }
+  });
+
+  if (huboCambios) {
+    guardarInventario();
+  }
+}
+
+function renderizarInventario() {
+  const lista = document.getElementById('listaInventario');
+  if (!lista) return;
+
+  const totalProductos = inventario.length;
+  const totalUnidades = inventario.reduce(function(s, p) { return s + (parseFloat(p.stock) || 0); }, 0);
+  const alertas = inventario.filter(function(p) { return (parseFloat(p.stock) || 0) <= (parseFloat(p.minimo) || 0); });
+
+  const elProds = document.getElementById('invTotalProductos');
+  const elUnids = document.getElementById('invTotalUnidades');
+  const elAlert = document.getElementById('invTotalAlertas');
+  if (elProds) elProds.textContent = totalProductos;
+  if (elUnids) elUnids.textContent = totalUnidades + ' unidades en stock';
+  if (elAlert) elAlert.textContent = alertas.length;
+
+  lista.innerHTML = '';
+
+  if (filtroInventarioActual === 'movimientos') {
+    if (!movimientosInv.length) {
+      lista.innerHTML = '<div class="historial-empty">📋<br>Aún no hay entradas ni salidas registradas.</div>';
+      return;
+    }
+    movimientosInv.forEach(function(m) {
+      const card = document.createElement('div');
+      card.className = 'nota-card';
+      card.style.marginBottom = '8px';
+      const esEntrada = m.tipo === 'entrada';
+      card.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<span style="font-weight:700;color:#1a1a2e">' + escapeHtml(m.nombre) + ' <small style="color:#888">(' + escapeHtml(m.codigo) + ')</small></span>' +
+          '<span style="font-weight:700;color:' + (esEntrada ? '#27ae60' : '#e74c3c') + '">' + (esEntrada ? '+' : '−') + m.cantidad + '</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#777">' +
+          (esEntrada ? 'Entrada' : 'Salida') + (m.motivo ? ' · ' + escapeHtml(m.motivo) : '') + ' · ' + formatDate(m.fecha) +
+        '</div>';
+      lista.appendChild(card);
+    });
+    return;
+  }
+
+  const q = (document.getElementById('invBusqueda') ? document.getElementById('invBusqueda').value : '').trim().toLowerCase();
+  let items = inventario.slice();
+
+  if (filtroInventarioActual === 'bajos') {
+    items = items.filter(function(p) { return (parseFloat(p.stock) || 0) <= (parseFloat(p.minimo) || 0); });
+  }
+
+  if (q) {
+    items = items.filter(function(p) {
+      return p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q);
+    });
+  }
+
+  if (!items.length) {
+    lista.innerHTML = '<div class="historial-empty">📦<br>No hay productos para mostrar aquí.</div>';
+    return;
+  }
+
+  items.forEach(function(prod) {
+    const stock = parseFloat(prod.stock) || 0;
+    const minimo = parseFloat(prod.minimo) || 0;
+    const agotado = stock <= 0;
+    const bajo = !agotado && stock <= minimo;
+
+    const card = document.createElement('div');
+    card.className = 'inv-card' + (agotado ? ' stock-agotado' : (bajo ? ' stock-bajo' : ''));
+
+    const estadoClase = agotado ? 'agotado' : (bajo ? 'bajo' : 'ok');
+    const estadoTexto = agotado ? 'AGOTADO (0)' : (bajo ? '⚠️ BAJO: ' + stock : 'Stock: ' + stock);
+
+    card.innerHTML =
+      '<div class="inv-top">' +
+        '<div>' +
+          '<div class="inv-nombre">' + escapeHtml(prod.nombre) + '</div>' +
+          '<div class="inv-meta">Código: <strong>' + escapeHtml(prod.codigo) + '</strong> · Precio: ' + formatCurrency(prod.precio || 0) + ' · Mín: ' + minimo + '</div>' +
+        '</div>' +
+        '<span class="inv-stock-pill ' + estadoClase + '">' + estadoTexto + '</span>' +
+      '</div>' +
+      '<div class="inv-controles">' +
+        '<button class="inv-btn entrada" onclick="moverStockInventario(\'' + prod.id + '\', \'entrada\')">+ Entrada</button>' +
+        '<button class="inv-btn salida" onclick="moverStockInventario(\'' + prod.id + '\', \'salida\')">− Salida</button>' +
+        '<button class="inv-btn usar" onclick="seleccionarDeCatalogo(\'' + escapeHtml(prod.nombre).replace(/'/g, "\\'") + '\', \'' + (prod.precio || '') + '\'); cerrarVista(\'inventario\'); mostrarToast(\'Agregado a la nota ✓\')">+ A Nota</button>' +
+        '<button class="inv-btn" onclick="editarProductoInventario(\'' + prod.id + '\')">✏️ Editar</button>' +
+        '<button class="inv-btn" style="color:#e74c3c" onclick="eliminarProductoInventario(\'' + prod.id + '\')">🗑</button>' +
+      '</div>';
+
+    lista.appendChild(card);
   });
 }
