@@ -231,6 +231,15 @@
           <span class="menu-chevron">›</span>
         </button>
 
+        <button class="menu-opcion" type="button" onclick="mostrarVista('inventario')">
+          <span class="menu-opcion-icon" style="background:#eef1ff;color:#2B3A8F">📦</span>
+          <span class="menu-opcion-info">
+            <span class="menu-opcion-label">Inventario</span>
+            <span class="menu-opcion-sub">Stock conectado al catálogo</span>
+          </span>
+          <span class="menu-chevron">›</span>
+        </button>
+
         <button class="menu-opcion" type="button" onclick="mostrarVista('gastos')">
           <span class="menu-opcion-icon" style="background:#fff5eb;color:#e67e22">💸</span>
           <span class="menu-opcion-info">
@@ -297,6 +306,41 @@
         <input type="text" id="catalogoBusqueda" class="campo-input-flat" placeholder="Buscar en catálogo..." />
       </div>
       <div id="catalogoLista" class="catalogo-lista"></div>
+    </div>
+  </div>
+
+  <!-- VISTA INVENTARIO -->
+  <div id="vistaInventario" class="vista-secundaria" style="display:none">
+    <div class="vista-header">
+      <button class="btn-back" type="button" onclick="cerrarVista('inventario')">‹ Volver</button>
+      <span class="vista-titulo">Inventario y Catálogo</span>
+    </div>
+    <div class="vista-body">
+      <div class="card" style="margin-bottom:12px">
+        <div class="seccion-header">
+          <span class="seccion-icon">＋</span>
+          <span class="seccion-title">AGREGAR / AJUSTAR STOCK</span>
+        </div>
+        <div class="seccion-body">
+          <div class="campo-wrapper">
+            <label class="campo-label" for="invNombreInput">Producto o insumo (unido al catálogo)</label>
+            <input type="text" id="invNombreInput" class="campo-input" placeholder="Ej. Blanco" />
+          </div>
+          <div class="campos-fila">
+            <div class="campo-wrapper flex1">
+              <label class="campo-label" for="invStockInput">Cantidad en inventario</label>
+              <input type="number" id="invStockInput" class="campo-input" min="0" step="1" inputmode="numeric" placeholder="30" />
+            </div>
+            <div class="campo-wrapper flex1">
+              <label class="campo-label" for="invPrecioInput">Precio unitario (opcional)</label>
+              <input type="text" id="invPrecioInput" class="campo-input" inputmode="decimal" placeholder="0.00" />
+            </div>
+          </div>
+          <button type="button" class="btn-primary-full" onclick="accionGuardarInventario()">Guardar en Inventario y Catálogo</button>
+        </div>
+      </div>
+
+      <div id="inventarioLista"></div>
     </div>
   </div>
 
@@ -438,6 +482,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-```[span_0](start_span)[span_0](end_span)[span_1](start_span)[span_1](end_span)[span_2](start_span)[span_2](end_span)[span_3](start_span)[span_3](end_span)[span_4](start_span)[span_4](end_span)[span_5](start_span)[span_5](end_span)[span_6](start_span)[span_6](end_span)
-
-Avísame en cuanto lo pegues y te mando **`style.css`**.
