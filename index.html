@@ -139,9 +139,9 @@
         <span class="total-value" id="totalIva" style="color:#aaa">$0.00</span>
       </div>
 
-      <!-- Datos Fiscales (solo si IVA activo) -->
+      <!-- Datos Fiscales (opcionales al activar IVA) -->
       <div class="fiscal-container" id="fiscalContainer" style="display:none">
-        <div class="fiscal-title" id="fiscalTitle">DATOS FISCALES — requeridos para cobrar</div>
+        <div class="fiscal-title" id="fiscalTitle">DATOS FISCALES — opcionales para cobrar</div>
         <div class="campo-wrapper">
           <label class="campo-label">RFC</label>
           <input type="text" id="fiscalRFC" class="campo-input" placeholder="XAXX010101000" maxlength="13" style="text-transform:uppercase">
@@ -278,10 +278,15 @@
           </div>
           <span class="menu-chevron">›</span>
         </button>
-
-
+        <button class="menu-opcion" onclick="mostrarVista('inventario'); cerrarMenu()">
+          <span class="menu-opcion-icon" style="background:#E3F2FD">📦</span>
+          <div class="menu-opcion-info">
+            <span class="menu-opcion-label">Inventario</span>
+            <span class="menu-opcion-sub" id="menuInventarioSub">Control de stock y alertas</span>
+          </div>
+          <span class="menu-badge-red" id="menuInventarioBadge" style="display:none">0</span>
+        </button>
         <button class="menu-opcion" onclick="mostrarVista('config'); cerrarMenu()">
-
           <span class="menu-opcion-icon" style="background:#F5F5F5">⚙️</span>
           <div class="menu-opcion-info">
             <span class="menu-opcion-label">Configuración</span>
@@ -365,17 +370,14 @@
       <button class="btn-back" onclick="cerrarVista('historial')">← Volver</button>
       <h2 class="vista-titulo" id="historialTitulo">Historial de Ventas</h2>
     </div>
-   <!-- Aquí metemos el cuerpo de la vista con la barra fija arriba -->
     <div class="vista-body">
-      <!-- Barra de Búsqueda del Historial -->
       <div class="catalogo-busqueda" style="margin-bottom: 12px; display: flex; align-items: center; background: #f5f5f5; padding: 8px 12px; border-radius: 8px;">
-          <span class="seccion-icon" style="margin-right: 8px;">🔍</span>
-          <input type="text" id="busquedaHistorialInput" class="campo-input-flat" placeholder="Buscar por cliente o No. de nota..." style="border: none; background: transparent; width: 100%; outline: none; font-size: 16px;">
+        <span class="seccion-icon" style="margin-right: 8px;">🔍</span>
+        <input type="text" id="busquedaHistorialInput" class="campo-input-flat" placeholder="Buscar por cliente o No. de nota..." style="border: none; background: transparent; width: 100%; outline: none; font-size: 16px;">
       </div>
-      <!-- Contenedor limpio solo para las tarjetas de las notas -->
-        <div id="historialLista"></div>
-      </div>
-  </div> 
+      <div id="historialLista"></div>
+    </div>
+  </div>
 
   <!-- ════════════════════════════════════════
        VISTA: CLIENTES
@@ -433,12 +435,14 @@
               ⚠️ REINICIAR APP (Borrar todo)
             </button>
           </div>
-
         </div>
       </div>
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════
+       VISTA: GASTOS
+  ════════════════════════════════════════ -->
   <div class="vista-secundaria" id="vistaGastos" style="display:none">
     <div class="vista-header">
       <button class="btn-back" onclick="cerrarVista('gastos')">← Volver</button>
@@ -508,6 +512,88 @@
 
       <!-- Lista de gastos con navegador de mes -->
       <div id="listaGastos" style="margin-top:10px"></div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       VISTA: INVENTARIO
+  ════════════════════════════════════════ -->
+  <div class="vista-secundaria" id="vistaInventario" style="display:none">
+    <div class="vista-header">
+      <button class="btn-back" onclick="cerrarVista('inventario')">← Volver</button>
+      <h2 class="vista-titulo">Inventario</h2>
+    </div>
+    <div class="vista-body">
+
+      <!-- KPIs rápidos de inventario -->
+      <div class="finanzas-resumen" style="margin-bottom:10px">
+        <div class="finanza-kpi">
+          <span class="finanza-kpi-label">PRODUCTOS</span>
+          <span class="finanza-kpi-value" id="invTotalProductos" style="color:#2B3A8F">0</span>
+          <span class="finanza-kpi-sub" id="invTotalUnidades">0 unidades en stock</span>
+        </div>
+        <div class="finanza-kpi">
+          <span class="finanza-kpi-label">ALERTAS STOCK</span>
+          <span class="finanza-kpi-value" id="invTotalAlertas" style="color:#e74c3c">0</span>
+          <span class="finanza-kpi-sub">bajos o agotados</span>
+        </div>
+      </div>
+
+      <!-- Formulario: Agregar producto al inventario -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="seccion-header">
+          <span class="seccion-icon">➕</span>
+          <span class="seccion-title">AGREGAR PRODUCTO AL INVENTARIO</span>
+        </div>
+        <div class="seccion-body" style="gap:10px">
+          <div class="campo-wrapper">
+            <label class="campo-label">NOMBRE DEL PRODUCTO</label>
+            <input type="text" id="invNombre" class="campo-input" placeholder="Ej. Playera negra M, Taza blanca...">
+          </div>
+          <div class="campos-fila">
+            <div class="campo-wrapper flex1">
+              <label class="campo-label">CÓDIGO (OPCIONAL)</label>
+              <input type="text" id="invCodigo" class="campo-input" placeholder="Auto si se deja vacío" style="text-transform:uppercase">
+            </div>
+            <div class="campo-wrapper flex1">
+              <label class="campo-label">PRECIO VENTA ($)</label>
+              <input type="text" id="invPrecio" class="campo-input" placeholder="0.00" inputmode="decimal">
+            </div>
+          </div>
+          <div class="campos-fila">
+            <div class="campo-wrapper flex1">
+              <label class="campo-label">STOCK INICIAL</label>
+              <input type="text" id="invStock" class="campo-input" placeholder="0" inputmode="numeric">
+            </div>
+            <div class="campo-wrapper flex1">
+              <label class="campo-label">ALERTA STOCK MÍNIMO</label>
+              <input type="text" id="invMinimo" class="campo-input" placeholder="5" inputmode="numeric">
+            </div>
+          </div>
+          <button class="btn-cobrar" onclick="accionAgregarInventario()" style="background:#2B3A8F">
+            ✓ Guardar en Inventario
+          </button>
+        </div>
+      </div>
+
+      <!-- Buscador y filtro de alertas -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="seccion-body" style="gap:8px">
+          <div class="catalogo-busqueda">
+            <span>🔍</span>
+            <input type="text" id="invBusqueda" class="campo-input-flat" placeholder="Buscar por nombre o código..." oninput="renderizarInventario()">
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="cat-btn active" id="invFiltroTodos" onclick="setFiltroInventario('todos', this)">Todos</button>
+            <button class="cat-btn" id="invFiltroBajos" onclick="setFiltroInventario('bajos', this)">⚠️ Stock Bajo</button>
+            <button class="cat-btn" id="invFiltroMovs" onclick="setFiltroInventario('movimientos', this)">📋 Movimientos</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Listado dinámico -->
+      <div id="listaInventario"></div>
 
     </div>
   </div>
