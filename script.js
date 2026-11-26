@@ -103,7 +103,7 @@ function cargarDatos() {
 
   notas = n ? JSON.parse(n) : [];
   catalogo = c ? JSON.parse(c).map(function(item) {
-    return Object.assign({ stock: 0, vecesUsado: 0 }, item);
+    return Object.assign({ stock: 0, minimo: 5, vecesUsado: 0 }, item);
   }) : [];
   gastos = g ? JSON.parse(g) : [];
   if (cf) config = Object.assign({}, config, JSON.parse(cf));
@@ -663,48 +663,38 @@ function accionGuardarPendiente() {
 // COBRAR, INVENTARIO, COMPARTIR E IMPRIMIR
 // ─────────────────────────────────────────────
 function accionCobrar() {
-  if (!verificarIvaOk()) {
-    mostrarToast('⚠️ Completa los datos fiscales');
-    return;
-  }
-
-  const esReimpresion = notaActual.cobrada;
+  const esReimpresion = !!notaActual.cobrada;
+  const num = String(notaActual.numero).padStart(4, '0');
 
   if (!esReimpresion) {
     notaActual.cobrada = true;
     const copia = JSON.parse(JSON.stringify(notaActual));
-    const idx = notas.findIndex(function(n) { return n.id === copia.id; });
+    const idx = notas.findIndex(function(n) {
+      return n.id === copia.id;
+    });
     if (idx >= 0) {
       notas[idx] = copia;
     } else {
       notas.push(copia);
     }
     guardarNotas();
-    descontarInventarioPorVenta(notaActual);
+    descontarInventarioPorNota(notaActual);
     actualizarBadgePendientes();
-
-    const num = String(notaActual.numero).padStart(4, '0');
     mostrarToast('Nota #' + num + ' cobrada ✓');
+  } else {
+    mostrarToast('Reimprimiendo nota #' + num);
   }
 
-  const textoParaTicketera = generarTextoTicketPlano();
-
-  // Abre la siguiente nota nueva ANTES de salir de Safari
+  // Abre la siguiente nota nueva en blanco ANTES de disparar la impresión
   if (!esReimpresion) {
     crearNuevaNota();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  navigator.clipboard.writeText(textoParaTicketera).then(() => {
-    alert("¡Nota copiada con éxito!\n\nAl darle 'Aceptar', se abrirá tu app de impresión. Deja presionado el cuadro blanco del centro, dale 'Pegar' y presiona el botón 'Print Text' para sacar el ticket.");
-    window.location.href = "posprinter://";
-  }).catch(() => {
-    imprimirTicket58mm();
-  });
-
-  compartirNota();
+  setTimeout(function() {
+    window.print();
+  }, 150);
 }
-
 
 function armarTextoNota(nota, usarAsteriscosWhatsapp) {
   const b = usarAsteriscosWhatsapp ? '*' : '';
@@ -885,6 +875,7 @@ function agregarAlCatalogo(nombre, precio, stockInicial) {
       nombre: nombre,
       precioUnitario: precio || '',
       stock: stockInicial !== undefined && stockInicial !== '' ? Math.max(0, parseFloat(stockInicial) || 0) : 0,
+      minimo: 5,
       vecesUsado: 1
     });
   }
@@ -938,7 +929,7 @@ function seleccionarDeCatalogo(nombre, precio) {
 }
 
 // ─────────────────────────────────────────────
-// INVENTARIO UNIDO AL CATÁLOGO
+// INVENTARIO UNIDO AL CATÁLOGO + ALERTAS DE STOCK
 // ─────────────────────────────────────────────
 function sincronizarStockEnCatalogo(nombre, stockValor, precioOpcional) {
   const limpio = String(nombre || '').trim();
@@ -961,6 +952,7 @@ function sincronizarStockEnCatalogo(nombre, stockValor, precioOpcional) {
       nombre: limpio,
       precioUnitario: precioNum,
       stock: stockNum,
+      minimo: 5,
       vecesUsado: 0
     });
   }
@@ -991,14 +983,57 @@ function accionGuardarInventario() {
   mostrarToast('Inventario actualizado y vinculado al catálogo ✓');
 }
 
+function cambiarMinimoInventario(id) {
+  const prod = catalogo.find(function(c) {
+    return c.id === id;
+  });
+  if (!prod) return;
+
+  const actual = prod.minimo !== undefined ? prod.minimo : 5;
+  const nuevoStr = prompt(
+    'Aviso de stock bajo para "' + prod.nombre + '"\n\n¿Con cuántas piezas restantes quieres que te avise antes de que se acabe?',
+    String(actual)
+  );
+  if (nuevoStr === null) return;
+
+  const nuevoMin = parseFloat(limpiarNumero(nuevoStr));
+  if (isNaN(nuevoMin) || nuevoMin < 0) {
+    mostrarToast('⚠️ Número no válido');
+    return;
+  }
+
+  prod.minimo = nuevoMin;
+  guardarCatalogo();
+  renderizarInventario();
+  mostrarToast('Alerta configurada a ' + nuevoMin + ' piezas ✓');
+}
+
 function ajustarStockItem(id, delta) {
+  let alertaManual = '';
+
   catalogo = catalogo.map(function(c) {
     if (c.id !== id) return c;
     const actual = parseFloat(c.stock) || 0;
-    return Object.assign({}, c, { stock: Math.max(0, actual + delta) });
+    const nuevoStock = Math.max(0, actual + delta);
+    const minimo = c.minimo !== undefined ? parseFloat(c.minimo) : 5;
+
+    if (delta < 0) {
+      if (nuevoStock <= 0) {
+        alertaManual = '🔴 AGOTADO: ' + c.nombre + ' quedó en 0 piezas.';
+      } else if (nuevoStock <= minimo) {
+        alertaManual = '⚠️ STOCK BAJO: ' + c.nombre + ' bajó a ' + nuevoStock + ' piezas (mínimo: ' + minimo + ').';
+      }
+    }
+
+    return Object.assign({}, c, { stock: nuevoStock });
   });
+
   guardarCatalogo();
   renderizarInventario();
+
+  if (alertaManual) {
+    alert('📢 AVISO DE INVENTARIO:\n\n' + alertaManual);
+  }
 }
 
 function renderizarInventario() {
@@ -1017,13 +1052,15 @@ function renderizarInventario() {
 
   items.forEach(function(item) {
     const stock = parseFloat(item.stock) || 0;
+    const minimo = item.minimo !== undefined ? parseFloat(item.minimo) : 5;
     const precioTxt = item.precioUnitario ? formatCurrency(item.precioUnitario) : 'Sin precio';
     let cardClass = 'inv-card';
     let pillClass = 'inv-stock-pill ok';
+
     if (stock <= 0) {
       cardClass += ' stock-agotado';
       pillClass = 'inv-stock-pill agotado';
-    } else if (stock <= 5) {
+    } else if (stock <= minimo) {
       cardClass += ' stock-bajo';
       pillClass = 'inv-stock-pill bajo';
     }
@@ -1033,17 +1070,18 @@ function renderizarInventario() {
 
     card.innerHTML =
       '<div class="inv-top">' +
-      '<div>' +
-      '<div class="inv-nombre">' + escapeHtml(item.nombre) + '</div>' +
-      '<div class="inv-meta">Precio catálogo: ' + precioTxt + '</div>' +
-      '</div>' +
-      '<span class="' + pillClass + '">' + stock + ' pzs</span>' +
+        '<div>' +
+          '<div class="inv-nombre">' + escapeHtml(item.nombre) + '</div>' +
+          '<div class="inv-meta">Precio: ' + precioTxt + ' · Aviso mínimo: ' + minimo + ' pzs</div>' +
+        '</div>' +
+        '<span class="' + pillClass + '">' + stock + ' pzs</span>' +
       '</div>' +
       '<div class="inv-controles">' +
-      '<button type="button" class="inv-btn salida">-1</button>' +
-      '<button type="button" class="inv-btn entrada">+1</button>' +
-      '<button type="button" class="inv-btn entrada">+10</button>' +
-      '<button type="button" class="inv-btn usar">Editar</button>' +
+        '<button type="button" class="inv-btn salida">-1</button>' +
+        '<button type="button" class="inv-btn entrada">+1</button>' +
+        '<button type="button" class="inv-btn entrada">+10</button>' +
+        '<button type="button" class="inv-btn">🔔 Mín: ' + minimo + '</button>' +
+        '<button type="button" class="inv-btn usar">Editar</button>' +
       '</div>';
 
     const botones = card.querySelectorAll('.inv-btn');
@@ -1057,6 +1095,9 @@ function renderizarInventario() {
       ajustarStockItem(item.id, 10);
     });
     botones[3].addEventListener('click', function() {
+      cambiarMinimoInventario(item.id);
+    });
+    botones[4].addEventListener('click', function() {
       document.getElementById('invNombreInput').value = item.nombre;
       document.getElementById('invStockInput').value = stock;
       document.getElementById('invPrecioInput').value = item.precioUnitario || '';
@@ -1067,66 +1108,51 @@ function renderizarInventario() {
   });
 }
 
-function cambiarMinimoInventario(id) {
-  const prod = inventario.find(function(p) { return p.id === id; });
-  if (!prod) return;
+function descontarInventarioPorNota(nota) {
+  if (!nota || !Array.isArray(nota.productos)) return;
 
-  const actual = prod.minimo !== undefined ? prod.minimo : 5;
-  const nuevoStr = prompt(
-    'Aviso de stock bajo para "' + prod.nombre + '"\n\n¿Con cuántas piezas restantes quieres que te avise antes de que se acabe?',
-    String(actual)
-  );
-  if (nuevoStr === null) return;
-
-  const nuevoMin = parseFloat(limpiarNumero(nuevoStr));
-  if (isNaN(nuevoMin) || nuevoMin < 0) {
-    mostrarToast('⚠️ Número no válido');
-    return;
-  }
-
-  prod.minimo = nuevoMin;
-  guardarInventario();
-  renderizarInventario();
-  mostrarToast('Alerta configurada a ' + nuevoMin + ' piezas ✓');
-}
-
-function descontarInventarioPorVenta(nota) {
-  if (!nota || !nota.productos) return;
-  let huboCambios = false;
-  let alertasDisparadas = [];
-
-  nota.productos.forEach(function(item) {
-    const desc = (item.descripcion || '').trim().toLowerCase();
-    const cant = parseFloat(item.cantidad) || 0;
-    if (!desc || cant <= 0) return;
-
-    const prod = inventario.find(function(p) {
-      return p.nombre.trim().toLowerCase() === desc || (item.codigo && p.codigo.toLowerCase() === item.codigo.toLowerCase());
-    });
-
-    if (prod) {
-      prod.stock = Math.max(0, (parseFloat(prod.stock) || 0) - cant);
-      registrarMovimientoInv(prod, 'salida', cant, 'Venta Nota #' + String(nota.numero).padStart(4, '0'));
-      huboCambios = true;
-
-      const minimo = parseFloat(prod.minimo) || 0;
-      if (prod.stock <= 0) {
-        alertasDisparadas.push('🔴 AGOTADO: ' + prod.nombre + ' quedó en 0 piezas.');
-      } else if (prod.stock <= minimo) {
-        alertasDisparadas.push('⚠️ STOCK BAJO: ' + prod.nombre + ' tiene solo ' + prod.stock + ' piezas (mínimo: ' + minimo + ').');
-      }
-    }
+  const consumos = new Map();
+  nota.productos.forEach(function(p) {
+    const key = normalizarTexto(p.descripcion);
+    const cant = parseFloat(p.cantidad) || 0;
+    if (!key || cant <= 0) return;
+    consumos.set(key, (consumos.get(key) || 0) + cant);
   });
 
-  if (huboCambios) {
-    guardarInventario();
+  if (!consumos.size) return;
+
+  let huboDescuento = false;
+  const alertasDisparadas = [];
+
+  catalogo = catalogo.map(function(item) {
+    const key = normalizarTexto(item.nombre);
+    if (!consumos.has(key)) return item;
+
+    huboDescuento = true;
+    const stockActual = parseFloat(item.stock) || 0;
+    const restar = consumos.get(key);
+    const nuevoStock = Math.max(0, stockActual - restar);
+    const minimo = item.minimo !== undefined ? parseFloat(item.minimo) : 5;
+
+    if (nuevoStock <= 0) {
+      alertasDisparadas.push('🔴 AGOTADO: ' + item.nombre + ' quedó en 0 piezas.');
+    } else if (nuevoStock <= minimo) {
+      alertasDisparadas.push('⚠️ STOCK BAJO: ' + item.nombre + ' tiene solo ' + nuevoStock + ' piezas (mínimo: ' + minimo + ').');
+    }
+
+    return Object.assign({}, item, {
+      stock: nuevoStock
+    });
+  });
+
+  if (huboDescuento) {
+    guardarCatalogo();
   }
 
   if (alertasDisparadas.length > 0) {
     alert('📢 AVISO DE INVENTARIO:\n\n' + alertasDisparadas.join('\n'));
   }
 }
-
 
 // ─────────────────────────────────────────────
 // AUTOCOMPLETAR NOMBRE DEL CLIENTE
