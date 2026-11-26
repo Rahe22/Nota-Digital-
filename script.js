@@ -91,6 +91,10 @@ function limpiarNumero(t) {
   return clean;
 }
 
+function redondearDosDecimales(num) {
+  return Math.round((parseFloat(num) || 0) * 100) / 100;
+}
+
 // ─────────────────────────────────────────────
 // PERSISTENCIA (localStorage)
 // ─────────────────────────────────────────────
@@ -678,21 +682,36 @@ function accionCobrar() {
       notas.push(copia);
     }
     guardarNotas();
+    guardarNotaActual();
     descontarInventarioPorNota(notaActual);
+
+    document.getElementById('cobradaBadge').style.display = 'flex';
+    document.getElementById('cobradaBanner').style.display = 'flex';
+    actualizarEstadoCobrada();
     actualizarBadgePendientes();
+    recalcularTotales();
+
     mostrarToast('Nota #' + num + ' cobrada ✓');
   } else {
     mostrarToast('Reimprimiendo nota #' + num);
   }
 
-  // Abre la siguiente nota nueva en blanco ANTES de disparar la impresión
-  if (!esReimpresion) {
-    crearNuevaNota();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   setTimeout(function() {
-    window.print();
+    if (!esReimpresion) {
+      let yaCreoSiguiente = false;
+      const prepararSiguiente = function() {
+        if (yaCreoSiguiente) return;
+        yaCreoSiguiente = true;
+        window.removeEventListener('afterprint', prepararSiguiente);
+        crearNuevaNota();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+      window.addEventListener('afterprint', prepararSiguiente);
+      window.print();
+      setTimeout(prepararSiguiente, 1200);
+    } else {
+      window.print();
+    }
   }, 150);
 }
 
@@ -867,14 +886,14 @@ function agregarAlCatalogo(nombre, precio, stockInicial) {
     existe.vecesUsado = (existe.vecesUsado || 0) + 1;
     if (precio !== undefined && precio !== '') existe.precioUnitario = precio;
     if (stockInicial !== undefined && stockInicial !== '') {
-      existe.stock = Math.max(0, parseFloat(stockInicial) || 0);
+      existe.stock = redondearDosDecimales(Math.max(0, parseFloat(stockInicial) || 0));
     }
   } else {
     catalogo.push({
       id: generarId(),
       nombre: nombre,
       precioUnitario: precio || '',
-      stock: stockInicial !== undefined && stockInicial !== '' ? Math.max(0, parseFloat(stockInicial) || 0) : 0,
+      stock: stockInicial !== undefined && stockInicial !== '' ? redondearDosDecimales(Math.max(0, parseFloat(stockInicial) || 0)) : 0,
       minimo: 5,
       vecesUsado: 1
     });
@@ -934,7 +953,7 @@ function seleccionarDeCatalogo(nombre, precio) {
 function sincronizarStockEnCatalogo(nombre, stockValor, precioOpcional) {
   const limpio = String(nombre || '').trim();
   if (!limpio) return;
-  const stockNum = Math.max(0, parseFloat(stockValor) || 0);
+  const stockNum = redondearDosDecimales(Math.max(0, parseFloat(stockValor) || 0));
   const precioNum = precioOpcional !== undefined && precioOpcional !== ''
     ? limpiarNumero(precioOpcional)
     : '';
@@ -1002,10 +1021,10 @@ function cambiarMinimoInventario(id) {
     return;
   }
 
-  prod.minimo = nuevoMin;
+  prod.minimo = redondearDosDecimales(nuevoMin);
   guardarCatalogo();
   renderizarInventario();
-  mostrarToast('Alerta configurada a ' + nuevoMin + ' piezas ✓');
+  mostrarToast('Alerta configurada a ' + prod.minimo + ' piezas ✓');
 }
 
 function ajustarStockItem(id, delta) {
@@ -1014,7 +1033,7 @@ function ajustarStockItem(id, delta) {
   catalogo = catalogo.map(function(c) {
     if (c.id !== id) return c;
     const actual = parseFloat(c.stock) || 0;
-    const nuevoStock = Math.max(0, actual + delta);
+    const nuevoStock = redondearDosDecimales(Math.max(0, actual + delta));
     const minimo = c.minimo !== undefined ? parseFloat(c.minimo) : 5;
 
     if (delta < 0) {
@@ -1131,7 +1150,7 @@ function descontarInventarioPorNota(nota) {
     huboDescuento = true;
     const stockActual = parseFloat(item.stock) || 0;
     const restar = consumos.get(key);
-    const nuevoStock = Math.max(0, stockActual - restar);
+    const nuevoStock = redondearDosDecimales(Math.max(0, stockActual - restar));
     const minimo = item.minimo !== undefined ? parseFloat(item.minimo) : 5;
 
     if (nuevoStock <= 0) {
