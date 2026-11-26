@@ -663,39 +663,48 @@ function accionGuardarPendiente() {
 // COBRAR, INVENTARIO, COMPARTIR E IMPRIMIR
 // ─────────────────────────────────────────────
 function accionCobrar() {
-  const yaEstabaCobrada = !!notaActual.cobrada;
-
-  if (!yaEstabaCobrada) {
-    descontarInventarioPorNota(notaActual);
+  if (!verificarIvaOk()) {
+    mostrarToast('⚠️ Completa los datos fiscales');
+    return;
   }
 
-  notaActual.cobrada = true;
+  const esReimpresion = notaActual.cobrada;
 
-  const copia = JSON.parse(JSON.stringify(notaActual));
-  const idx = notas.findIndex(function(n) {
-    return n.id === copia.id;
+  if (!esReimpresion) {
+    notaActual.cobrada = true;
+    const copia = JSON.parse(JSON.stringify(notaActual));
+    const idx = notas.findIndex(function(n) { return n.id === copia.id; });
+    if (idx >= 0) {
+      notas[idx] = copia;
+    } else {
+      notas.push(copia);
+    }
+    guardarNotas();
+    descontarInventarioPorVenta(notaActual);
+    actualizarBadgePendientes();
+
+    const num = String(notaActual.numero).padStart(4, '0');
+    mostrarToast('Nota #' + num + ' cobrada ✓');
+  }
+
+  const textoParaTicketera = generarTextoTicketPlano();
+
+  // Abre la siguiente nota nueva ANTES de salir de Safari
+  if (!esReimpresion) {
+    crearNuevaNota();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  navigator.clipboard.writeText(textoParaTicketera).then(() => {
+    alert("¡Nota copiada con éxito!\n\nAl darle 'Aceptar', se abrirá tu app de impresión. Deja presionado el cuadro blanco del centro, dale 'Pegar' y presiona el botón 'Print Text' para sacar el ticket.");
+    window.location.href = "posprinter://";
+  }).catch(() => {
+    imprimirTicket58mm();
   });
-  if (idx >= 0) {
-    notas[idx] = copia;
-  } else {
-    notas.push(copia);
-  }
-  guardarNotas();
-  guardarNotaActual();
 
-  document.getElementById('cobradaBadge').style.display = 'flex';
-  document.getElementById('cobradaBanner').style.display = 'flex';
-  actualizarEstadoCobrada();
-  actualizarBadgePendientes();
-  recalcularTotales();
-
-  const num = String(notaActual.numero).padStart(4, '0');
-  mostrarToast(yaEstabaCobrada ? 'Reimprimiendo nota #' + num : 'Nota #' + num + ' cobrada y stock actualizado ✓');
-
-  setTimeout(function() {
-    window.print();
-  }, 150);
+  compartirNota();
 }
+
 
 function armarTextoNota(nota, usarAsteriscosWhatsapp) {
   const b = usarAsteriscosWhatsapp ? '*' : '';
