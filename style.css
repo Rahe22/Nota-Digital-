@@ -357,8 +357,14 @@ html, body {
 }
 
 /* =============================================
-   PRODUCTOS Y TABLA
+   PRODUCTOS, CATÁLOGO Y BOTÓN ESCÁNER
 ============================================= */
+.productos-header-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .catalogo-btn {
   background: rgba(255, 255, 255, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.35);
@@ -369,6 +375,11 @@ html, body {
   border-radius: 6px;
   cursor: pointer;
   font-family: inherit;
+}
+
+.escaner-btn {
+  background: #27ae60;
+  border-color: #2ecc71;
 }
 
 .tabla-headers {
@@ -776,7 +787,7 @@ html, body {
 }
 
 /* =============================================
-   OVERLAYS Y MODALES (MENÚ Y CATÁLOGO)
+   OVERLAYS Y MODALES (MENÚ, CATÁLOGO, ESCÁNER, ETIQUETA)
 ============================================= */
 .overlay {
   position: fixed;
@@ -793,7 +804,7 @@ html, body {
   background: #fff;
   width: 100%;
   max-width: 700px;
-  max-height: 88dvh;
+  max-height: 90dvh;
   border-radius: 18px 18px 0 0;
   display: flex;
   flex-direction: column;
@@ -885,6 +896,122 @@ html, body {
 .menu-chevron {
   font-size: 20px;
   color: #bbb;
+}
+
+/* =============================================
+   ESCÁNER DE CÁMARA
+============================================= */
+.escaner-body {
+  padding: 14px 16px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.escaner-instruccion {
+  font-size: 13px;
+  color: #555;
+  text-align: center;
+}
+
+.escaner-visor {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #111;
+  min-height: 220px;
+}
+
+.escaner-estado {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2B3A8F;
+}
+
+.escaner-contador {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #27ae60;
+  background: #F0FBF4;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+/* =============================================
+   ETIQUETA IMPRIMIBLE (QR / CÓDIGO)
+============================================= */
+.etiqueta-body {
+  padding: 16px 16px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.etiqueta-preview {
+  width: 100%;
+  max-width: 240px;
+  border: 2px dashed #2B3A8F;
+  border-radius: 12px;
+  padding: 14px 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.etiqueta-empresa {
+  font-size: 10px;
+  font-weight: 700;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.etiqueta-qr-box {
+  padding: 6px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.etiqueta-qr-box img,
+.etiqueta-qr-box canvas {
+  display: block;
+  margin: 0 auto;
+}
+
+.etiqueta-codigo {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: 1px;
+}
+
+.etiqueta-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.etiqueta-precio {
+  font-size: 16px;
+  font-weight: 800;
+  color: #2B3A8F;
+}
+
+.etiqueta-acciones {
+  width: 100%;
+  max-width: 300px;
 }
 
 /* =============================================
@@ -1228,10 +1355,22 @@ html, body {
   color: #1a1a2e;
 }
 
+.inv-codigo-pill {
+  display: inline-block;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2B3A8F;
+  background: #EEF0FF;
+  padding: 2px 7px;
+  border-radius: 5px;
+  margin-top: 3px;
+}
+
 .inv-meta {
   font-size: 11px;
   color: #777;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .inv-stock-pill {
@@ -1265,7 +1404,7 @@ html, body {
 
 .inv-btn {
   flex: 1;
-  min-width: 72px;
+  min-width: 68px;
   padding: 7px 8px;
   border-radius: 8px;
   border: 1px solid #dde0e8;
@@ -1293,6 +1432,12 @@ html, body {
   border-color: #2B3A8F;
   color: #2B3A8F;
   background: #EEF0FF;
+}
+
+.inv-btn.etiqueta {
+  border-color: #8e44ad;
+  color: #8e44ad;
+  background: #F5EEF8;
 }
 
 /* =============================================
@@ -1323,7 +1468,7 @@ html, body {
 }
 
 /* =============================================
-   IMPRESIÓN TÉRMICA 58MM
+   IMPRESIÓN TÉRMICA 58MM (NOTA Y ETIQUETA)
 ============================================= */
 @media print {
   .navbar,
@@ -1333,9 +1478,14 @@ html, body {
   .btn-star,
   .agregar-fila-btn,
   .catalogo-btn,
-  .overlay,
   .vista-secundaria,
-  .toast {
+  .toast,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Modo normal: imprimir nota de remisión */
+  body:not(.imprimiendo-etiqueta) .overlay {
     display: none !important;
   }
 
@@ -1353,5 +1503,39 @@ html, body {
   .card {
     box-shadow: none !important;
     border-radius: 0 !important;
+  }
+
+  /* Modo etiqueta: imprimir SOLO la etiqueta QR/barras */
+  body.imprimiendo-etiqueta .main-scroll,
+  body.imprimiendo-etiqueta #overlayMenu,
+  body.imprimiendo-etiqueta #overlayCatalogo,
+  body.imprimiendo-etiqueta #overlayEscaner {
+    display: none !important;
+  }
+
+  body.imprimiendo-etiqueta #overlayEtiqueta {
+    position: static !important;
+    background: #fff !important;
+    display: block !important;
+  }
+
+  body.imprimiendo-etiqueta .etiqueta-sheet {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-height: none !important;
+  }
+
+  body.imprimiendo-etiqueta .etiqueta-preview {
+    border: 1.5px solid #000 !important;
+    max-width: 54mm !important;
+    margin: 0 auto !important;
+    padding: 6px !important;
+  }
+
+  body.imprimiendo-etiqueta .etiqueta-precio,
+  body.imprimiendo-etiqueta .etiqueta-nombre,
+  body.imprimiendo-etiqueta .etiqueta-codigo,
+  body.imprimiendo-etiqueta .etiqueta-empresa {
+    color: #000 !important;
   }
 }
