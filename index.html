@@ -96,7 +96,10 @@
       <div class="seccion-header" id="headerProductos">
         <span class="seccion-icon">📦</span>
         <span class="seccion-title">PRODUCTOS</span>
-        <button type="button" class="catalogo-btn" id="btnCatalogo">⭐ Catálogo</button>
+        <div class="productos-header-btns">
+          <button type="button" class="catalogo-btn escaner-btn" id="btnEscanear">📷 Escanear</button>
+          <button type="button" class="catalogo-btn" id="btnCatalogo">⭐ Catálogo</button>
+        </div>
       </div>
 
       <!-- Encabezados de tabla -->
@@ -248,7 +251,7 @@
           <span class="menu-opcion-icon" style="background:#EEF1FF">📦</span>
           <div class="menu-opcion-info">
             <span class="menu-opcion-label">Inventario</span>
-            <span class="menu-opcion-sub">Stock conectado al catálogo</span>
+            <span class="menu-opcion-sub">Stock, códigos QR y etiquetas</span>
           </div>
           <span class="menu-chevron">›</span>
         </button>
@@ -325,9 +328,48 @@
         </div>
         <div class="catalogo-busqueda" id="catalogoBusquedaWrap" style="display:none">
           <span>🔍</span>
-          <input type="text" id="catalogoBusqueda" class="campo-input-flat" placeholder="Buscar producto...">
+          <input type="text" id="catalogoBusqueda" class="campo-input-flat" placeholder="Buscar por nombre o código...">
         </div>
         <div class="catalogo-lista" id="catalogoLista"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY: ESCÁNER DE CÁMARA (QR / CÓDIGO DE BARRAS) -->
+  <div class="overlay" id="overlayEscaner" style="display:none">
+    <div class="catalogo-sheet escaner-sheet">
+      <div class="menu-header">
+        <span class="menu-title">📷 Escanear Producto</span>
+        <button type="button" class="btn-cerrar-modal" id="btnCerrarEscaner">✕</button>
+      </div>
+      <div class="escaner-body">
+        <p class="escaner-instruccion">Apunta la cámara al código QR o de barras. Se agregará directo a la nota.</p>
+        <div id="readerEscaner" class="escaner-visor"></div>
+        <div class="escaner-estado" id="escanerEstado">Iniciando cámara...</div>
+        <div class="escaner-contador" id="escanerContador">Productos escaneados en esta sesión: 0</div>
+        <button type="button" class="btn-cobrar" id="btnListoEscaner" style="margin-top:8px">✓ Listo, volver a la nota</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY: ETIQUETA IMPRIMIBLE -->
+  <div class="overlay" id="overlayEtiqueta" style="display:none">
+    <div class="catalogo-sheet etiqueta-sheet">
+      <div class="menu-header no-print">
+        <span class="menu-title">🏷️ Etiqueta del Producto</span>
+        <button type="button" class="btn-cerrar-modal" id="btnCerrarEtiqueta">✕</button>
+      </div>
+      <div class="etiqueta-body">
+        <div class="etiqueta-preview" id="etiquetaPreview">
+          <div class="etiqueta-empresa" id="etiquetaEmpresa"></div>
+          <div id="etiquetaQrContainer" class="etiqueta-qr-box"></div>
+          <div class="etiqueta-codigo" id="etiquetaCodigoTxt">PROD-0001</div>
+          <div class="etiqueta-nombre" id="etiquetaNombreTxt">Producto</div>
+          <div class="etiqueta-precio" id="etiquetaPrecioTxt">$0.00</div>
+        </div>
+        <div class="etiqueta-acciones no-print">
+          <button type="button" class="btn-cobrar" id="btnImprimirEtiqueta">🖨️ Imprimir Etiqueta</button>
+        </div>
       </div>
     </div>
   </div>
@@ -363,6 +405,13 @@
           <div class="campo-wrapper">
             <label class="campo-label" for="invNombreInput">Producto o insumo (igual al catálogo)</label>
             <input type="text" id="invNombreInput" class="campo-input" placeholder="Ej. Blanco">
+          </div>
+          <div class="campo-wrapper">
+            <label class="campo-label" for="invCodigoInput">Código de barras / QR (opcional, se genera automático si lo dejas vacío)</label>
+            <div class="campos-fila">
+              <input type="text" id="invCodigoInput" class="campo-input flex1" placeholder="Ej. PROD-0001 o código del empaque" style="text-transform:uppercase">
+              <button type="button" class="btn-outline-gray" id="btnGenerarCodigoInv" style="white-space:nowrap">⚡ Generar</button>
+            </div>
           </div>
           <div class="campos-fila">
             <div class="campo-wrapper flex1">
@@ -510,6 +559,9 @@
   <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
+  <!-- Librerías para Escáner (QR / Barras) y Generación de Etiquetas -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
