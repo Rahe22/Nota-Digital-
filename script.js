@@ -17,6 +17,13 @@ let config = {
 };
 let gastos = [];
 
+// Variables del escáner de cámara
+let html5QrScanner = null;
+let escanerActivo = false;
+let ultimoCodigoLeido = '';
+let ultimaLecturaMs = 0;
+let conteoSesionEscaner = 0;
+
 // ─────────────────────────────────────────────
 // UTILIDADES
 // ─────────────────────────────────────────────
@@ -26,6 +33,27 @@ function generarId() {
 
 function normalizarTexto(t) {
   return String(t || '').trim().toLowerCase();
+}
+
+function normalizarCodigo(c) {
+  return String(c || '').trim().toUpperCase();
+}
+
+function generarCodigoProducto() {
+  let maxNum = 0;
+  catalogo.forEach(function(item) {
+    const match = String(item.codigo || '').match(/^PROD-(\d+)$/i);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n > maxNum) maxNum = n;
+    }
+  });
+  let candidato = '';
+  do {
+    maxNum++;
+    candidato = 'PROD-' + String(maxNum).padStart(4, '0');
+  } while (catalogo.some(function(c) { return normalizarCodigo(c.codigo) === candidato; }));
+  return candidato;
 }
 
 function formatCurrency(valor) {
@@ -95,6 +123,27 @@ function redondearDosDecimales(num) {
   return Math.round((parseFloat(num) || 0) * 100) / 100;
 }
 
+function feedbackLecturaExitosa() {
+  if (navigator.vibrate) {
+    navigator.vibrate(70);
+  }
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1046.5, ctx.currentTime);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.13);
+  } catch (e) {}
+}
+
 // ─────────────────────────────────────────────
 // PERSISTENCIA (localStorage)
 // ─────────────────────────────────────────────
@@ -106,9 +155,24 @@ function cargarDatos() {
   const g = localStorage.getItem('nr_gastos');
 
   notas = n ? JSON.parse(n) : [];
+  let huboNuevosCodigos = false;
   catalogo = c ? JSON.parse(c).map(function(item) {
-    return Object.assign({ stock: 0, minimo: 5, vecesUsado: 0 }, item);
+    const base = Object.assign({ stock: 0, minimo: 5, vecesUsado: 0, codigo: '' }, item);
+    return base;
   }) : [];
+
+  catalogo.forEach(function(item) {
+    if (!item.codigo || !String(item.codigo).trim()) {
+      item.codigo = generarCodigoProducto();
+      huboNuevosCodigos = true;
+    } else {
+      item.codigo = normalizarCodigo(item.codigo);
+    }
+  });
+  if (huboNuevosCodigos) {
+    guardarCatalogo();
+  }
+
   gastos = g ? JSON.parse(g) : [];
   if (cf) config = Object.assign({}, config, JSON.parse(cf));
   notaActual = na ? JSON.parse(na) : null;
@@ -414,7 +478,7 @@ function mostrarSugerencias(prodId, texto, wrapper) {
   const q = normalizarTexto(texto);
   const filtrados = catalogo
     .filter(function(p) {
-      return normalizarTexto(p.nombre).includes(q);
+      return normalizarTexto(p.nombre).includes(q) || normalizarTexto(p.codigo).includes(q);
     })
     .sort(function(a, b) {
       return (b.vecesUsado || 0) - (a.vecesUsado || 0);
@@ -599,6 +663,9 @@ function actualizarEstadoCobrada() {
       el.style.color = '';
     }
   });
+
+  const btnEscanear = document.getElementById('btnEscanear');
+  if (btnEscanear) btnEscanear.style.display = cobrada ? 'none' : 'inline-block';
 
   document.getElementById('btnGuardarPendiente').style.display = cobrada ? 'none' : 'flex';
   const btnCobrar = document.getElementById('btnCobrar');
@@ -786,6 +853,199 @@ function accionNuevaNota() {
 }
 
 // ─────────────────────────────────────────────
+// ESCÁNER DE CÁMARA (QR / CÓDIGO DE BARRAS)
+// ─────────────────────────────────────────────
+function abrirEscaner() {
+  if (notaActual && notaActual.cobrada) {
+    mostrarToast('Esta nota ya fue cobrada');
+    return;
+  }
+  if (typeof Html5Qrcode === 'undefined') {
+    mostrarToast('⚠️ No se cargó el módulo de cámara. Revisa tu conexión.');
+    return;
+  }
+
+  conteoSesionEscaner = 0;
+  ultimoCodigoLeido = '';
+  ultimaLecturaMs = 0;
+
+  const estadoEl = document.getElementById('escanerEstado');
+  const contadorEl = document.getElementById('escanerContador');
+  if (estadoEl) estadoEl.textContent = 'Iniciando cámara trasera...';
+  if (contadorEl) contadorEl.textContent = 'Productos escaneados en esta sesión: 0';
+
+  document.getElementById('overlayEscaner').style.display = 'flex';
+
+  setTimeout(function() {
+    if (escanerActivo) return;
+    html5QrScanner = new Html5Qrcode('readerEscaner');
+    html5QrScanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      onCodigoEscaneado,
+      function() {}
+    ).then(function() {
+      escanerActivo = true;
+      if (estadoEl) estadoEl.textContent = 'Cámara lista · Enfoca un código QR o de barras';
+    }).catch(function() {
+      escanerActivo = false;
+      if (estadoEl) {
+        estadoEl.textContent = '⚠️ No se pudo abrir la cámara. Verifica los permisos en Safari/Chrome.';
+      }
+    });
+  }, 150);
+}
+
+function cerrarEscaner() {
+  document.getElementById('overlayEscaner').style.display = 'none';
+  if (html5QrScanner && escanerActivo) {
+    escanerActivo = false;
+    html5QrScanner.stop().then(function() {
+      html5QrScanner.clear();
+      html5QrScanner = null;
+    }).catch(function() {
+      html5QrScanner = null;
+    });
+  } else if (html5QrScanner) {
+    try { html5QrScanner.clear(); } catch (e) {}
+    html5QrScanner = null;
+  }
+}
+
+function onCodigoEscaneado(decodedText) {
+  const codigo = normalizarCodigo(decodedText);
+  if (!codigo) return;
+
+  const ahora = Date.now();
+  // Freno de 1.5 segundos para evitar lecturas repetidas accidentales
+  if (codigo === ultimoCodigoLeido && (ahora - ultimaLecturaMs) < 1500) {
+    return;
+  }
+  ultimoCodigoLeido = codigo;
+  ultimaLecturaMs = ahora;
+
+  const producto = catalogo.find(function(c) {
+    return normalizarCodigo(c.codigo) === codigo;
+  });
+
+  const estadoEl = document.getElementById('escanerEstado');
+  const contadorEl = document.getElementById('escanerContador');
+
+  if (!producto) {
+    if (estadoEl) {
+      estadoEl.style.color = '#e74c3c';
+      estadoEl.textContent = '❌ Código "' + codigo + '" no registrado en Inventario';
+    }
+    mostrarToast('Código no encontrado: ' + codigo);
+    return;
+  }
+
+  agregarProductoEscaneadoANota(producto);
+  feedbackLecturaExitosa();
+  conteoSesionEscaner++;
+
+  if (estadoEl) {
+    estadoEl.style.color = '#27ae60';
+    estadoEl.textContent = '✓ Agregado: ' + producto.nombre;
+  }
+  if (contadorEl) {
+    contadorEl.textContent = 'Productos escaneados en esta sesión: ' + conteoSesionEscaner;
+  }
+  mostrarToast('+1 ' + producto.nombre + ' ✓');
+}
+
+function agregarProductoEscaneadoANota(prodCatalogo) {
+  // Si el producto ya está en la nota actual, suma +1 a la cantidad
+  const filaExistente = notaActual.productos.find(function(p) {
+    return normalizarTexto(p.descripcion) === normalizarTexto(prodCatalogo.nombre);
+  });
+
+  if (filaExistente) {
+    const nuevaCant = redondearDosDecimales((parseFloat(filaExistente.cantidad) || 0) + 1);
+    filaExistente.cantidad = String(nuevaCant);
+    if (!filaExistente.precioUnitario && prodCatalogo.precioUnitario) {
+      filaExistente.precioUnitario = prodCatalogo.precioUnitario;
+    }
+  } else {
+    const filaVacia = notaActual.productos.find(function(p) {
+      return !p.descripcion && !p.cantidad && !p.precioUnitario;
+    });
+    if (filaVacia) {
+      filaVacia.descripcion = prodCatalogo.nombre;
+      filaVacia.precioUnitario = prodCatalogo.precioUnitario || '';
+      filaVacia.cantidad = '1';
+    } else {
+      const f = nuevaFila();
+      f.descripcion = prodCatalogo.nombre;
+      f.precioUnitario = prodCatalogo.precioUnitario || '';
+      f.cantidad = '1';
+      notaActual.productos.push(f);
+    }
+  }
+
+  prodCatalogo.vecesUsado = (prodCatalogo.vecesUsado || 0) + 1;
+  guardarCatalogo();
+
+  renderizarProductos();
+  recalcularTotales();
+  guardarNotaActual();
+}
+
+// ─────────────────────────────────────────────
+// ETIQUETAS IMPRIMIBLES (QR / CÓDIGO)
+// ─────────────────────────────────────────────
+function abrirEtiquetaProducto(item) {
+  const codigo = normalizarCodigo(item.codigo) || generarCodigoProducto();
+  if (!item.codigo) {
+    item.codigo = codigo;
+    guardarCatalogo();
+  }
+
+  document.getElementById('etiquetaEmpresa').textContent = config.nombre || 'NOTA DE REMISIÓN';
+  document.getElementById('etiquetaCodigoTxt').textContent = codigo;
+  document.getElementById('etiquetaNombreTxt').textContent = item.nombre;
+  document.getElementById('etiquetaPrecioTxt').textContent = item.precioUnitario
+    ? formatCurrency(item.precioUnitario)
+    : '';
+
+  const qrBox = document.getElementById('etiquetaQrContainer');
+  qrBox.innerHTML = '';
+
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(qrBox, {
+      text: codigo,
+      width: 130,
+      height: 130,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } else {
+    qrBox.innerHTML = '<div style="padding:12px;font-family:monospace;font-weight:700">' + escapeHtml(codigo) + '</div>';
+  }
+
+  document.getElementById('overlayEtiqueta').style.display = 'flex';
+}
+
+function cerrarEtiqueta() {
+  document.getElementById('overlayEtiqueta').style.display = 'none';
+}
+
+function imprimirEtiquetaActual() {
+  document.body.classList.add('imprimiendo-etiqueta');
+  let limpio = false;
+  const limpiarModoEtiqueta = function() {
+    if (limpio) return;
+    limpio = true;
+    window.removeEventListener('afterprint', limpiarModoEtiqueta);
+    document.body.classList.remove('imprimiendo-etiqueta');
+  };
+  window.addEventListener('afterprint', limpiarModoEtiqueta);
+  window.print();
+  setTimeout(limpiarModoEtiqueta, 1200);
+}
+
+// ─────────────────────────────────────────────
 // CATÁLOGO DE PRODUCTOS (UNIDO A INVENTARIO)
 // ─────────────────────────────────────────────
 function abrirCatalogo() {
@@ -808,7 +1068,7 @@ function renderizarCatalogo() {
 
   if (busqueda) {
     items = items.filter(function(p) {
-      return normalizarTexto(p.nombre).includes(busqueda);
+      return normalizarTexto(p.nombre).includes(busqueda) || normalizarTexto(p.codigo).includes(busqueda);
     });
   }
 
@@ -840,8 +1100,8 @@ function renderizarCatalogo() {
     meta.className = 'catalogo-item-meta';
     const precioTxt = prod.precioUnitario ? formatCurrency(prod.precioUnitario) : 'Sin precio';
     const stockTxt = 'Stock: ' + (parseFloat(prod.stock) || 0) + ' pzs';
-    const usosTxt = (prod.vecesUsado || 0) + ' uso' + ((prod.vecesUsado || 0) !== 1 ? 's' : '');
-    meta.textContent = precioTxt + ' · ' + stockTxt + ' · ' + usosTxt;
+    const codTxt = prod.codigo ? ' · [' + prod.codigo + ']' : '';
+    meta.textContent = precioTxt + ' · ' + stockTxt + codTxt;
 
     info.appendChild(nombre);
     info.appendChild(meta);
@@ -878,19 +1138,23 @@ function renderizarCatalogo() {
   });
 }
 
-function agregarAlCatalogo(nombre, precio, stockInicial) {
+function agregarAlCatalogo(nombre, precio, stockInicial, codigoOpcional) {
+  const codLimpio = normalizarCodigo(codigoOpcional);
   const existe = catalogo.find(function(c) {
     return normalizarTexto(c.nombre) === normalizarTexto(nombre);
   });
   if (existe) {
     existe.vecesUsado = (existe.vecesUsado || 0) + 1;
     if (precio !== undefined && precio !== '') existe.precioUnitario = precio;
+    if (codLimpio) existe.codigo = codLimpio;
+    else if (!existe.codigo) existe.codigo = generarCodigoProducto();
     if (stockInicial !== undefined && stockInicial !== '') {
       existe.stock = redondearDosDecimales(Math.max(0, parseFloat(stockInicial) || 0));
     }
   } else {
     catalogo.push({
       id: generarId(),
+      codigo: codLimpio || generarCodigoProducto(),
       nombre: nombre,
       precioUnitario: precio || '',
       stock: stockInicial !== undefined && stockInicial !== '' ? redondearDosDecimales(Math.max(0, parseFloat(stockInicial) || 0)) : 0,
@@ -950,13 +1214,14 @@ function seleccionarDeCatalogo(nombre, precio) {
 // ─────────────────────────────────────────────
 // INVENTARIO UNIDO AL CATÁLOGO + ALERTAS DE STOCK
 // ─────────────────────────────────────────────
-function sincronizarStockEnCatalogo(nombre, stockValor, precioOpcional) {
+function sincronizarStockEnCatalogo(nombre, stockValor, precioOpcional, codigoOpcional) {
   const limpio = String(nombre || '').trim();
   if (!limpio) return;
   const stockNum = redondearDosDecimales(Math.max(0, parseFloat(stockValor) || 0));
   const precioNum = precioOpcional !== undefined && precioOpcional !== ''
     ? limpiarNumero(precioOpcional)
     : '';
+  const codLimpio = normalizarCodigo(codigoOpcional);
 
   const existe = catalogo.find(function(c) {
     return normalizarTexto(c.nombre) === normalizarTexto(limpio);
@@ -965,9 +1230,12 @@ function sincronizarStockEnCatalogo(nombre, stockValor, precioOpcional) {
   if (existe) {
     existe.stock = stockNum;
     if (precioNum !== '') existe.precioUnitario = precioNum;
+    if (codLimpio) existe.codigo = codLimpio;
+    else if (!existe.codigo) existe.codigo = generarCodigoProducto();
   } else {
     catalogo.push({
       id: generarId(),
+      codigo: codLimpio || generarCodigoProducto(),
       nombre: limpio,
       precioUnitario: precioNum,
       stock: stockNum,
@@ -980,6 +1248,8 @@ function sincronizarStockEnCatalogo(nombre, stockValor, precioOpcional) {
 
 function accionGuardarInventario() {
   const nombre = document.getElementById('invNombreInput').value.trim();
+  const codigoEl = document.getElementById('invCodigoInput');
+  const codigo = codigoEl ? normalizarCodigo(codigoEl.value) : '';
   const stockRaw = document.getElementById('invStockInput').value;
   const precio = limpiarNumero(document.getElementById('invPrecioInput').value.trim());
 
@@ -992,9 +1262,21 @@ function accionGuardarInventario() {
     return;
   }
 
-  sincronizarStockEnCatalogo(nombre, parseFloat(stockRaw), precio);
+  // Verificar que el código no pertenezca a otro producto distinto
+  if (codigo) {
+    const duplicado = catalogo.find(function(c) {
+      return normalizarCodigo(c.codigo) === codigo && normalizarTexto(c.nombre) !== normalizarTexto(nombre);
+    });
+    if (duplicado) {
+      mostrarToast('⚠️ El código "' + codigo + '" ya lo usa "' + duplicado.nombre + '"');
+      return;
+    }
+  }
+
+  sincronizarStockEnCatalogo(nombre, parseFloat(stockRaw), precio, codigo);
 
   document.getElementById('invNombreInput').value = '';
+  if (codigoEl) codigoEl.value = '';
   document.getElementById('invStockInput').value = '';
   document.getElementById('invPrecioInput').value = '';
 
@@ -1073,6 +1355,7 @@ function renderizarInventario() {
     const stock = parseFloat(item.stock) || 0;
     const minimo = item.minimo !== undefined ? parseFloat(item.minimo) : 5;
     const precioTxt = item.precioUnitario ? formatCurrency(item.precioUnitario) : 'Sin precio';
+    const codigoTxt = item.codigo || '';
     let cardClass = 'inv-card';
     let pillClass = 'inv-stock-pill ok';
 
@@ -1091,6 +1374,7 @@ function renderizarInventario() {
       '<div class="inv-top">' +
         '<div>' +
           '<div class="inv-nombre">' + escapeHtml(item.nombre) + '</div>' +
+          (codigoTxt ? '<span class="inv-codigo-pill">🏷️ ' + escapeHtml(codigoTxt) + '</span>' : '') +
           '<div class="inv-meta">Precio: ' + precioTxt + ' · Aviso mínimo: ' + minimo + ' pzs</div>' +
         '</div>' +
         '<span class="' + pillClass + '">' + stock + ' pzs</span>' +
@@ -1100,6 +1384,7 @@ function renderizarInventario() {
         '<button type="button" class="inv-btn entrada">+1</button>' +
         '<button type="button" class="inv-btn entrada">+10</button>' +
         '<button type="button" class="inv-btn">🔔 Mín: ' + minimo + '</button>' +
+        '<button type="button" class="inv-btn etiqueta">🏷️ Etiqueta</button>' +
         '<button type="button" class="inv-btn usar">Editar</button>' +
       '</div>';
 
@@ -1117,7 +1402,12 @@ function renderizarInventario() {
       cambiarMinimoInventario(item.id);
     });
     botones[4].addEventListener('click', function() {
+      abrirEtiquetaProducto(item);
+    });
+    botones[5].addEventListener('click', function() {
       document.getElementById('invNombreInput').value = item.nombre;
+      const codEl = document.getElementById('invCodigoInput');
+      if (codEl) codEl.value = item.codigo || '';
       document.getElementById('invStockInput').value = stock;
       document.getElementById('invPrecioInput').value = item.precioUnitario || '';
       document.getElementById('invStockInput').focus();
@@ -1547,8 +1837,46 @@ function inicializarEventos() {
   document.getElementById('overlayCatalogo').addEventListener('click', function(e) {
     if (e.target === this) cerrarCatalogo();
   });
+  const overlayEscaner = document.getElementById('overlayEscaner');
+  if (overlayEscaner) {
+    overlayEscaner.addEventListener('click', function(e) {
+      if (e.target === this) cerrarEscaner();
+    });
+  }
+  const overlayEtiqueta = document.getElementById('overlayEtiqueta');
+  if (overlayEtiqueta) {
+    overlayEtiqueta.addEventListener('click', function(e) {
+      if (e.target === this) cerrarEtiqueta();
+    });
+  }
 
   document.getElementById('btnCerrarCatalogo').addEventListener('click', cerrarCatalogo);
+
+  const btnEscanear = document.getElementById('btnEscanear');
+  if (btnEscanear) btnEscanear.addEventListener('click', abrirEscaner);
+
+  const btnCerrarEscaner = document.getElementById('btnCerrarEscaner');
+  if (btnCerrarEscaner) btnCerrarEscaner.addEventListener('click', cerrarEscaner);
+
+  const btnListoEscaner = document.getElementById('btnListoEscaner');
+  if (btnListoEscaner) btnListoEscaner.addEventListener('click', cerrarEscaner);
+
+  const btnCerrarEtiqueta = document.getElementById('btnCerrarEtiqueta');
+  if (btnCerrarEtiqueta) btnCerrarEtiqueta.addEventListener('click', cerrarEtiqueta);
+
+  const btnImprimirEtiqueta = document.getElementById('btnImprimirEtiqueta');
+  if (btnImprimirEtiqueta) btnImprimirEtiqueta.addEventListener('click', imprimirEtiquetaActual);
+
+  const btnGenerarCodigoInv = document.getElementById('btnGenerarCodigoInv');
+  if (btnGenerarCodigoInv) {
+    btnGenerarCodigoInv.addEventListener('click', function() {
+      const codEl = document.getElementById('invCodigoInput');
+      if (codEl) {
+        codEl.value = generarCodigoProducto();
+        mostrarToast('Código generado ✓');
+      }
+    });
+  }
 
   document.getElementById('btnCatalogo').addEventListener('click', abrirCatalogo);
   document.getElementById('btnCatalogoAgregar').addEventListener('click', accionAgregarAlCatalogo);
@@ -1682,6 +2010,8 @@ function inicializarEventos() {
     if (e.key === 'Escape') {
       cerrarMenu();
       cerrarCatalogo();
+      cerrarEscaner();
+      cerrarEtiqueta();
     }
   });
 }
