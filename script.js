@@ -1067,35 +1067,66 @@ function renderizarInventario() {
   });
 }
 
-function descontarInventarioPorNota(nota) {
-  if (!nota || !Array.isArray(nota.productos)) return;
+function cambiarMinimoInventario(id) {
+  const prod = inventario.find(function(p) { return p.id === id; });
+  if (!prod) return;
 
-  const consumos = new Map();
-  nota.productos.forEach(function(p) {
-    const key = normalizarTexto(p.descripcion);
-    const cant = parseFloat(p.cantidad) || 0;
-    if (!key || cant <= 0) return;
-    consumos.set(key, (consumos.get(key) || 0) + cant);
-  });
+  const actual = prod.minimo !== undefined ? prod.minimo : 5;
+  const nuevoStr = prompt(
+    'Aviso de stock bajo para "' + prod.nombre + '"\n\n¿Con cuántas piezas restantes quieres que te avise antes de que se acabe?',
+    String(actual)
+  );
+  if (nuevoStr === null) return;
 
-  if (!consumos.size) return;
+  const nuevoMin = parseFloat(limpiarNumero(nuevoStr));
+  if (isNaN(nuevoMin) || nuevoMin < 0) {
+    mostrarToast('⚠️ Número no válido');
+    return;
+  }
 
-  let huboDescuento = false;
-  catalogo = catalogo.map(function(item) {
-    const key = normalizarTexto(item.nombre);
-    if (!consumos.has(key)) return item;
-    huboDescuento = true;
-    const stockActual = parseFloat(item.stock) || 0;
-    const restar = consumos.get(key);
-    return Object.assign({}, item, {
-      stock: Math.max(0, stockActual - restar)
+  prod.minimo = nuevoMin;
+  guardarInventario();
+  renderizarInventario();
+  mostrarToast('Alerta configurada a ' + nuevoMin + ' piezas ✓');
+}
+
+function descontarInventarioPorVenta(nota) {
+  if (!nota || !nota.productos) return;
+  let huboCambios = false;
+  let alertasDisparadas = [];
+
+  nota.productos.forEach(function(item) {
+    const desc = (item.descripcion || '').trim().toLowerCase();
+    const cant = parseFloat(item.cantidad) || 0;
+    if (!desc || cant <= 0) return;
+
+    const prod = inventario.find(function(p) {
+      return p.nombre.trim().toLowerCase() === desc || (item.codigo && p.codigo.toLowerCase() === item.codigo.toLowerCase());
     });
+
+    if (prod) {
+      prod.stock = Math.max(0, (parseFloat(prod.stock) || 0) - cant);
+      registrarMovimientoInv(prod, 'salida', cant, 'Venta Nota #' + String(nota.numero).padStart(4, '0'));
+      huboCambios = true;
+
+      const minimo = parseFloat(prod.minimo) || 0;
+      if (prod.stock <= 0) {
+        alertasDisparadas.push('🔴 AGOTADO: ' + prod.nombre + ' quedó en 0 piezas.');
+      } else if (prod.stock <= minimo) {
+        alertasDisparadas.push('⚠️ STOCK BAJO: ' + prod.nombre + ' tiene solo ' + prod.stock + ' piezas (mínimo: ' + minimo + ').');
+      }
+    }
   });
 
-  if (huboDescuento) {
-    guardarCatalogo();
+  if (huboCambios) {
+    guardarInventario();
+  }
+
+  if (alertasDisparadas.length > 0) {
+    alert('📢 AVISO DE INVENTARIO:\n\n' + alertasDisparadas.join('\n'));
   }
 }
+
 
 // ─────────────────────────────────────────────
 // AUTOCOMPLETAR NOMBRE DEL CLIENTE
