@@ -20,8 +20,8 @@ let gastos = [];
 // Variables del escáner de cámara
 let html5QrScanner = null;
 let escanerActivo = false;
-let ultimoCodigoLeido = '';
-let ultimaLecturaMs = 0;
+let escanerPausadoPorConfirmacion = false;
+let productoEscaneadoPendiente = null;
 let conteoSesionEscaner = 0;
 
 // ─────────────────────────────────────────────
@@ -853,8 +853,17 @@ function accionNuevaNota() {
 }
 
 // ─────────────────────────────────────────────
-// ESCÁNER DE CÁMARA HD (CÓDIGO DE BARRAS / QR)
+// ESCÁNER DE CÁMARA HD CON BOTÓN DE CONFIRMACIÓN
 // ─────────────────────────────────────────────
+function resetearTarjetaConfirmacionScan() {
+  escanerPausadoPorConfirmacion = false;
+  productoEscaneadoPendiente = null;
+  const card = document.getElementById('escanerConfirmCard');
+  if (card) card.style.display = 'none';
+  const btnAdd = document.getElementById('btnConfirmarAgregarScan');
+  if (btnAdd) btnAdd.textContent = '＋ Agregar a la nota';
+}
+
 function abrirEscaner() {
   if (notaActual && notaActual.cobrada) {
     mostrarToast('Esta nota ya fue cobrada');
@@ -866,8 +875,7 @@ function abrirEscaner() {
   }
 
   conteoSesionEscaner = 0;
-  ultimoCodigoLeido = '';
-  ultimaLecturaMs = 0;
+  resetearTarjetaConfirmacionScan();
 
   const estadoEl = document.getElementById('escanerEstado');
   const contadorEl = document.getElementById('escanerContador');
@@ -875,11 +883,10 @@ function abrirEscaner() {
     estadoEl.style.color = '#2B3A8F';
     estadoEl.textContent = 'Iniciando cámara HD...';
   }
-  if (contadorEl) contadorEl.textContent = 'Productos escaneados en esta sesión: 0';
+  if (contadorEl) contadorEl.textContent = 'Productos agregados en esta sesión: 0';
 
   document.getElementById('overlayEscaner').style.display = 'flex';
 
-  // Esperar 300ms a que abra el modal para calcular bien el cuadro guía
   setTimeout(function() {
     if (escanerActivo) return;
 
@@ -935,6 +942,7 @@ function abrirEscaner() {
 }
 
 function cerrarEscaner() {
+  resetearTarjetaConfirmacionScan();
   document.getElementById('overlayEscaner').style.display = 'none';
   if (html5QrScanner && escanerActivo) {
     escanerActivo = false;
@@ -951,49 +959,78 @@ function cerrarEscaner() {
 }
 
 function onCodigoEscaneado(decodedText) {
+  // Si ya hay un producto esperando que el usuario toque el botón, ignorar nuevas lecturas
+  if (escanerPausadoPorConfirmacion) return;
+
   const codigo = normalizarCodigo(decodedText);
   if (!codigo) return;
-
-  const ahora = Date.now();
-  // Pausa de 2.5 segundos para dar tiempo de retirar la etiqueta sin duplicar
-  if (codigo === ultimoCodigoLeido && (ahora - ultimaLecturaMs) < 2500) {
-    return;
-  }
-  ultimoCodigoLeido = codigo;
-  ultimaLecturaMs = ahora;
 
   const producto = catalogo.find(function(c) {
     return normalizarCodigo(c.codigo) === codigo;
   });
 
   const estadoEl = document.getElementById('escanerEstado');
-  const contadorEl = document.getElementById('escanerContador');
 
   if (!producto) {
     if (estadoEl) {
       estadoEl.style.color = '#e74c3c';
       estadoEl.textContent = '❌ Código "' + codigo + '" no registrado en Inventario';
     }
-    mostrarToast('Código no encontrado: ' + codigo);
     return;
   }
 
-  agregarProductoEscaneadoANota(producto);
+  // Pausamos lecturas y mostramos la tarjeta con el botón "Agregar a la nota"
+  escanerPausadoPorConfirmacion = true;
+  productoEscaneadoPendiente = producto;
   feedbackLecturaExitosa();
-  conteoSesionEscaner++;
 
+  document.getElementById('escanerConfirmNombre').textContent = producto.nombre;
+  document.getElementById('escanerConfirmMeta').textContent =
+    'Clave: ' + producto.codigo + ' · Stock: ' + (parseFloat(producto.stock) || 0) + ' pzs';
+  document.getElementById('escanerConfirmPrecio').textContent = producto.precioUnitario
+    ? formatCurrency(producto.precioUnitario)
+    : '$0.00';
+
+  const btnAdd = document.getElementById('btnConfirmarAgregarScan');
+  if (btnAdd) btnAdd.textContent = '＋ Agregar a la nota';
+
+  document.getElementById('escanerConfirmCard').style.display = 'flex';
   if (estadoEl) {
     estadoEl.style.color = '#27ae60';
-    estadoEl.textContent = '✓ +1 ' + producto.nombre + ' (listo para el siguiente...)';
+    estadoEl.textContent = '✓ Código detectado · Confirma abajo para agregar';
   }
+}
+
+function confirmarAgregarProductoEscaneado() {
+  if (!productoEscaneadoPendiente) return;
+
+  const prod = productoEscaneadoPendiente;
+  agregarProductoEscaneadoANota(prod);
+  conteoSesionEscaner++;
+
+  const contadorEl = document.getElementById('escanerContador');
   if (contadorEl) {
-    contadorEl.textContent = 'Productos escaneados en esta sesión: ' + conteoSesionEscaner;
+    contadorEl.textContent = 'Productos agregados en esta sesión: ' + conteoSesionEscaner;
   }
-  mostrarToast('+1 ' + producto.nombre + ' ✓');
+
+  const btnAdd = document.getElementById('btnConfirmarAgregarScan');
+  if (btnAdd) {
+    btnAdd.textContent = '✓ Agregado (toca para +1 más)';
+  }
+
+  mostrarToast('+1 ' + prod.nombre + ' agregado ✓');
+}
+
+function continuarEscaneandoSiguiente() {
+  resetearTarjetaConfirmacionScan();
+  const estadoEl = document.getElementById('escanerEstado');
+  if (estadoEl) {
+    estadoEl.style.color = '#2B3A8F';
+    estadoEl.textContent = 'Listo · Apunta al siguiente código de barras';
+  }
 }
 
 function agregarProductoEscaneadoANota(prodCatalogo) {
-  // Si el producto ya está en la nota actual, suma +1 a la cantidad
   const filaExistente = notaActual.productos.find(function(p) {
     return normalizarTexto(p.descripcion) === normalizarTexto(prodCatalogo.nombre);
   });
@@ -1043,7 +1080,7 @@ function abrirEtiquetaProducto(item) {
   const codigoTxtEl = document.getElementById('etiquetaCodigoTxt');
   if (codigoTxtEl) {
     codigoTxtEl.textContent = codigo;
-    codigoTxtEl.style.display = 'none'; // JsBarcode ya imprime la clave justo debajo de las barras
+    codigoTxtEl.style.display = 'none';
   }
 
   document.getElementById('etiquetaNombreTxt').textContent = item.nombre;
@@ -1311,7 +1348,6 @@ function accionGuardarInventario() {
     return;
   }
 
-  // Verificar que el código no pertenezca a otro producto distinto
   if (codigo) {
     const duplicado = catalogo.find(function(c) {
       return normalizarCodigo(c.codigo) === codigo && normalizarTexto(c.nombre) !== normalizarTexto(nombre);
@@ -1906,6 +1942,12 @@ function inicializarEventos() {
 
   const btnCerrarEscaner = document.getElementById('btnCerrarEscaner');
   if (btnCerrarEscaner) btnCerrarEscaner.addEventListener('click', cerrarEscaner);
+
+  const btnConfirmarAgregarScan = document.getElementById('btnConfirmarAgregarScan');
+  if (btnConfirmarAgregarScan) btnConfirmarAgregarScan.addEventListener('click', confirmarAgregarProductoEscaneado);
+
+  const btnIgnorarScan = document.getElementById('btnIgnorarScan');
+  if (btnIgnorarScan) btnIgnorarScan.addEventListener('click', continuarEscaneandoSiguiente);
 
   const btnListoEscaner = document.getElementById('btnListoEscaner');
   if (btnListoEscaner) btnListoEscaner.addEventListener('click', cerrarEscaner);
