@@ -804,7 +804,7 @@ html, body {
   background: #fff;
   width: 100%;
   max-width: 700px;
-  max-height: 90dvh;
+  max-height: 92dvh;
   border-radius: 18px 18px 0 0;
   display: flex;
   flex-direction: column;
@@ -899,10 +899,10 @@ html, body {
 }
 
 /* =============================================
-   ESCÁNER DE CÁMARA
+   ESCÁNER DE CÁMARA + CONFIRMACIÓN MANUAL
 ============================================= */
 .escaner-body {
-  padding: 14px 16px 26px;
+  padding: 12px 16px 24px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -939,13 +939,72 @@ html, body {
   color: #2B3A8F;
 }
 
+.escaner-confirm-card {
+  background: #F0FBF4;
+  border: 2px solid #27ae60;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 3px 10px rgba(39, 174, 96, 0.14);
+}
+
+.escaner-confirm-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.escaner-confirm-nombre {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.escaner-confirm-meta {
+  font-size: 11px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.escaner-confirm-precio {
+  font-size: 17px;
+  font-weight: 800;
+  color: #27ae60;
+  white-space: nowrap;
+}
+
+.escaner-confirm-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-escaner-agregar {
+  flex: 1;
+  background-color: #27ae60;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-escaner-agregar:active {
+  background-color: #219150;
+}
+
 .escaner-contador {
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: #27ae60;
-  background: #F0FBF4;
-  padding: 8px;
+  color: #2B3A8F;
+  background: #EEF0FF;
+  padding: 7px;
   border-radius: 8px;
 }
 
