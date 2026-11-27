@@ -853,7 +853,7 @@ function accionNuevaNota() {
 }
 
 // ─────────────────────────────────────────────
-// ESCÁNER DE CÁMARA (CÓDIGO DE BARRAS / QR)
+// ESCÁNER DE CÁMARA HD (CÓDIGO DE BARRAS / QR)
 // ─────────────────────────────────────────────
 function abrirEscaner() {
   if (notaActual && notaActual.cobrada) {
@@ -871,29 +871,67 @@ function abrirEscaner() {
 
   const estadoEl = document.getElementById('escanerEstado');
   const contadorEl = document.getElementById('escanerContador');
-  if (estadoEl) estadoEl.textContent = 'Iniciando cámara trasera...';
+  if (estadoEl) {
+    estadoEl.style.color = '#2B3A8F';
+    estadoEl.textContent = 'Iniciando cámara HD...';
+  }
   if (contadorEl) contadorEl.textContent = 'Productos escaneados en esta sesión: 0';
 
   document.getElementById('overlayEscaner').style.display = 'flex';
 
+  // Esperar 300ms a que abra el modal para calcular bien el cuadro guía
   setTimeout(function() {
     if (escanerActivo) return;
-    html5QrScanner = new Html5Qrcode('readerEscaner');
+
+    const formatosSoportados = typeof Html5QrcodeSupportedFormats !== 'undefined'
+      ? [
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.QR_CODE
+        ]
+      : undefined;
+
+    html5QrScanner = new Html5Qrcode('readerEscaner', {
+      formatsToSupport: formatosSoportados,
+      verbose: false
+    });
+
+    const configCamara = {
+      fps: 15,
+      qrbox: function(viewfinderWidth, viewfinderHeight) {
+        const ancho = Math.min(280, Math.floor(viewfinderWidth * 0.85));
+        const alto = Math.min(130, Math.floor(viewfinderHeight * 0.55));
+        return { width: ancho, height: alto };
+      },
+      aspectRatio: 1.5,
+      videoConstraints: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        focusMode: 'continuous'
+      }
+    };
+
     html5QrScanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 260, height: 130 } },
+      configCamara,
       onCodigoEscaneado,
       function() {}
     ).then(function() {
       escanerActivo = true;
-      if (estadoEl) estadoEl.textContent = 'Cámara lista · Enfoca el código de barras';
+      if (estadoEl) estadoEl.textContent = 'Cámara lista · Centra las barras dentro del recuadro';
     }).catch(function() {
       escanerActivo = false;
       if (estadoEl) {
+        estadoEl.style.color = '#e74c3c';
         estadoEl.textContent = '⚠️ No se pudo abrir la cámara. Verifica los permisos en Safari/Chrome.';
       }
     });
-  }, 150);
+  }, 300);
 }
 
 function cerrarEscaner() {
@@ -917,8 +955,8 @@ function onCodigoEscaneado(decodedText) {
   if (!codigo) return;
 
   const ahora = Date.now();
-  // Freno de 1.5 segundos para evitar lecturas repetidas accidentales
-  if (codigo === ultimoCodigoLeido && (ahora - ultimaLecturaMs) < 1500) {
+  // Pausa de 2.5 segundos para dar tiempo de retirar la etiqueta sin duplicar
+  if (codigo === ultimoCodigoLeido && (ahora - ultimaLecturaMs) < 2500) {
     return;
   }
   ultimoCodigoLeido = codigo;
@@ -946,7 +984,7 @@ function onCodigoEscaneado(decodedText) {
 
   if (estadoEl) {
     estadoEl.style.color = '#27ae60';
-    estadoEl.textContent = '✓ Agregado: ' + producto.nombre;
+    estadoEl.textContent = '✓ +1 ' + producto.nombre + ' (listo para el siguiente...)';
   }
   if (contadorEl) {
     contadorEl.textContent = 'Productos escaneados en esta sesión: ' + conteoSesionEscaner;
