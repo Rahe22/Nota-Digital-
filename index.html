@@ -251,7 +251,7 @@
           <span class="menu-opcion-icon" style="background:#EEF1FF">📦</span>
           <div class="menu-opcion-info">
             <span class="menu-opcion-label">Inventario</span>
-            <span class="menu-opcion-sub">Stock, códigos QR y etiquetas</span>
+            <span class="menu-opcion-sub">Stock, códigos y etiquetas</span>
           </div>
           <span class="menu-chevron">›</span>
         </button>
@@ -335,7 +335,7 @@
     </div>
   </div>
 
-  <!-- OVERLAY: ESCÁNER DE CÁMARA (QR / CÓDIGO DE BARRAS) -->
+  <!-- OVERLAY: ESCÁNER DE CÁMARA (CÓDIGO DE BARRAS / QR) -->
   <div class="overlay" id="overlayEscaner" style="display:none">
     <div class="catalogo-sheet escaner-sheet">
       <div class="menu-header">
@@ -343,7 +343,7 @@
         <button type="button" class="btn-cerrar-modal" id="btnCerrarEscaner">✕</button>
       </div>
       <div class="escaner-body">
-        <p class="escaner-instruccion">Apunta la cámara al código QR o de barras. Se agregará directo a la nota.</p>
+        <p class="escaner-instruccion">Apunta la cámara al código de barras. Se agregará directo a la nota.</p>
         <div id="readerEscaner" class="escaner-visor"></div>
         <div class="escaner-estado" id="escanerEstado">Iniciando cámara...</div>
         <div class="escaner-contador" id="escanerContador">Productos escaneados en esta sesión: 0</div>
@@ -407,7 +407,7 @@
             <input type="text" id="invNombreInput" class="campo-input" placeholder="Ej. Blanco">
           </div>
           <div class="campo-wrapper">
-            <label class="campo-label" for="invCodigoInput">Código de barras / QR (opcional, se genera automático si lo dejas vacío)</label>
+            <label class="campo-label" for="invCodigoInput">Código de barras (opcional, se genera automático si lo dejas vacío)</label>
             <div class="campos-fila">
               <input type="text" id="invCodigoInput" class="campo-input flex1" placeholder="Ej. PROD-0001 o código del empaque" style="text-transform:uppercase">
               <button type="button" class="btn-outline-gray" id="btnGenerarCodigoInv" style="white-space:nowrap">⚡ Generar</button>
@@ -559,9 +559,9 @@
   <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
-  <!-- Librerías para Escáner (QR / Barras) y Generación de Etiquetas -->
+  <!-- Librerías para Escáner y Código de Barras Lineal -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
