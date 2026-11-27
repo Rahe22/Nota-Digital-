@@ -853,7 +853,7 @@ function accionNuevaNota() {
 }
 
 // ─────────────────────────────────────────────
-// ESCÁNER DE CÁMARA (QR / CÓDIGO DE BARRAS)
+// ESCÁNER DE CÁMARA (CÓDIGO DE BARRAS / QR)
 // ─────────────────────────────────────────────
 function abrirEscaner() {
   if (notaActual && notaActual.cobrada) {
@@ -881,12 +881,12 @@ function abrirEscaner() {
     html5QrScanner = new Html5Qrcode('readerEscaner');
     html5QrScanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 240, height: 240 } },
+      { fps: 10, qrbox: { width: 260, height: 130 } },
       onCodigoEscaneado,
       function() {}
     ).then(function() {
       escanerActivo = true;
-      if (estadoEl) estadoEl.textContent = 'Cámara lista · Enfoca un código QR o de barras';
+      if (estadoEl) estadoEl.textContent = 'Cámara lista · Enfoca el código de barras';
     }).catch(function() {
       escanerActivo = false;
       if (estadoEl) {
@@ -992,7 +992,7 @@ function agregarProductoEscaneadoANota(prodCatalogo) {
 }
 
 // ─────────────────────────────────────────────
-// ETIQUETAS IMPRIMIBLES (QR / CÓDIGO)
+// ETIQUETAS IMPRIMIBLES (CÓDIGO DE BARRAS LINEAL)
 // ─────────────────────────────────────────────
 function abrirEtiquetaProducto(item) {
   const codigo = normalizarCodigo(item.codigo) || generarCodigoProducto();
@@ -1002,26 +1002,37 @@ function abrirEtiquetaProducto(item) {
   }
 
   document.getElementById('etiquetaEmpresa').textContent = config.nombre || 'NOTA DE REMISIÓN';
-  document.getElementById('etiquetaCodigoTxt').textContent = codigo;
+  const codigoTxtEl = document.getElementById('etiquetaCodigoTxt');
+  if (codigoTxtEl) {
+    codigoTxtEl.textContent = codigo;
+    codigoTxtEl.style.display = 'none'; // JsBarcode ya imprime la clave justo debajo de las barras
+  }
+
   document.getElementById('etiquetaNombreTxt').textContent = item.nombre;
   document.getElementById('etiquetaPrecioTxt').textContent = item.precioUnitario
     ? formatCurrency(item.precioUnitario)
     : '';
 
-  const qrBox = document.getElementById('etiquetaQrContainer');
-  qrBox.innerHTML = '';
+  const barcodeBox = document.getElementById('etiquetaQrContainer');
+  barcodeBox.innerHTML = '';
 
-  if (typeof QRCode !== 'undefined') {
-    new QRCode(qrBox, {
-      text: codigo,
-      width: 130,
-      height: 130,
-      colorDark: '#000000',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
+  if (typeof JsBarcode !== 'undefined') {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    barcodeBox.appendChild(svg);
+    JsBarcode(svg, codigo, {
+      format: 'CODE128',
+      width: 1.5,
+      height: 38,
+      displayValue: true,
+      fontSize: 11,
+      fontOptions: 'bold',
+      margin: 2,
+      background: '#ffffff',
+      lineColor: '#000000'
     });
   } else {
-    qrBox.innerHTML = '<div style="padding:12px;font-family:monospace;font-weight:700">' + escapeHtml(codigo) + '</div>';
+    if (codigoTxtEl) codigoTxtEl.style.display = 'block';
+    barcodeBox.innerHTML = '<div style="padding:8px;font-family:monospace;font-weight:700">' + escapeHtml(codigo) + '</div>';
   }
 
   document.getElementById('overlayEtiqueta').style.display = 'flex';
