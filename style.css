@@ -917,12 +917,19 @@ html, body {
 
 .escaner-visor {
   width: 100%;
-  max-width: 380px;
+  max-width: 360px;
   margin: 0 auto;
   border-radius: 12px;
   overflow: hidden;
-  background: #111;
-  min-height: 220px;
+  background: #000;
+  position: relative;
+}
+
+.escaner-visor video {
+  width: 100% !important;
+  height: auto !important;
+  object-fit: cover;
+  display: block;
 }
 
 .escaner-estado {
