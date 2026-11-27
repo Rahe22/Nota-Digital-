@@ -943,7 +943,7 @@ html, body {
 }
 
 /* =============================================
-   ETIQUETA IMPRIMIBLE (QR / CÓDIGO)
+   ETIQUETA IMPRIMIBLE (CÓDIGO DE BARRAS COMPACTO)
 ============================================= */
 .etiqueta-body {
   padding: 16px 16px 26px;
@@ -957,18 +957,18 @@ html, body {
   width: 100%;
   max-width: 240px;
   border: 2px dashed #2B3A8F;
-  border-radius: 12px;
-  padding: 14px 12px;
+  border-radius: 10px;
+  padding: 8px 10px;
   background: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 6px;
+  gap: 3px;
 }
 
 .etiqueta-empresa {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: #666;
   text-transform: uppercase;
@@ -976,37 +976,43 @@ html, body {
 }
 
 .etiqueta-qr-box {
-  padding: 6px;
+  padding: 1px 0;
   background: #fff;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.etiqueta-qr-box svg,
 .etiqueta-qr-box img,
 .etiqueta-qr-box canvas {
   display: block;
   margin: 0 auto;
+  max-width: 100%;
+  height: auto;
 }
 
 .etiqueta-codigo {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #1a1a2e;
   letter-spacing: 1px;
 }
 
 .etiqueta-nombre {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #1a1a2e;
+  line-height: 1.2;
 }
 
 .etiqueta-precio {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: #2B3A8F;
+  line-height: 1.1;
 }
 
 .etiqueta-acciones {
@@ -1505,7 +1511,7 @@ html, body {
     border-radius: 0 !important;
   }
 
-  /* Modo etiqueta: imprimir SOLO la etiqueta QR/barras */
+  /* Modo etiqueta: imprimir SOLO la etiqueta de código de barras */
   body.imprimiendo-etiqueta .main-scroll,
   body.imprimiendo-etiqueta #overlayMenu,
   body.imprimiendo-etiqueta #overlayCatalogo,
@@ -1526,10 +1532,11 @@ html, body {
   }
 
   body.imprimiendo-etiqueta .etiqueta-preview {
-    border: 1.5px solid #000 !important;
+    border: 1px solid #000 !important;
     max-width: 54mm !important;
     margin: 0 auto !important;
-    padding: 6px !important;
+    padding: 4px !important;
+    gap: 2px !important;
   }
 
   body.imprimiendo-etiqueta .etiqueta-precio,
